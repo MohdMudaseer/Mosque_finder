@@ -506,5 +506,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// For initial data we'll use the MemStorage temporarily just for setup - we'll switch to database after pushing
-export const storage = new MemStorage();
+// Switch to database storage
+export const storage = new DatabaseStorage();

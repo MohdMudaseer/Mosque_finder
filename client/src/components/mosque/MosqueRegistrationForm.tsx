@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,7 +47,7 @@ const MosqueRegistrationForm = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,7 +90,7 @@ const MosqueRegistrationForm = () => {
   });
 
   // Function to handle image file selection
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Set the file in the form
@@ -334,7 +334,79 @@ const MosqueRegistrationForm = () => {
           </div>
           
           <div>
-            <h3 className="font-heading text-xl font-bold mb-4 border-b border-gray-200 pb-2">Prayer Times</h3>
+            <h3 className="font-heading text-xl font-bold mb-4 border-b border-gray-200 pb-2">Azaan Times (Adhan)</h3>
+            
+            <FormField
+              control={form.control}
+              name="fajrAzaan"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>Fajr Azaan <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="flex-1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="dhuhrAzaan"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>Dhuhr Azaan <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="flex-1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="asrAzaan"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>Asr Azaan <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="flex-1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="maghribAzaan"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>Maghrib Azaan <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="flex-1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="ishaAzaan"
+              render={({ field }) => (
+                <FormItem className="mb-6">
+                  <FormLabel>Isha Azaan <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="flex-1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <h3 className="font-heading text-xl font-bold mb-4 border-b border-gray-200 pb-2">Jamaat Times (Namaz)</h3>
             
             <FormField
               control={form.control}
@@ -593,23 +665,51 @@ const MosqueRegistrationForm = () => {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-center w-full">
-                      <div className="flex flex-col w-full h-32 border-2 border-dashed border-primary/50 rounded-lg hover:bg-neutral-light cursor-pointer">
-                        <div className="flex flex-col items-center justify-center pt-7">
-                          <i className="fas fa-cloud-upload-alt text-3xl text-primary mb-2"></i>
-                          <p className="text-sm text-neutral-dark">
-                            {field.value ? "Image URL added" : "Enter mosque exterior photo URL"}
-                          </p>
-                        </div>
+                      <div 
+                        className="flex flex-col w-full h-32 border-2 border-dashed border-primary/50 rounded-lg hover:bg-neutral-light cursor-pointer overflow-hidden relative" 
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {imagePreview ? (
+                          <img 
+                            src={imagePreview} 
+                            alt="Image preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <i className="fas fa-cloud-upload-alt text-3xl text-primary mb-2"></i>
+                            <p className="text-sm text-neutral-dark">
+                              Click to upload mosque exterior photo
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <FormControl>
-                      <Input 
-                        type="text" 
-                        {...field} 
-                        placeholder="Enter image URL" 
-                        className="mt-2"
-                      />
-                    </FormControl>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <FormControl>
+                        <Input 
+                          type="text" 
+                          {...field} 
+                          placeholder="Or enter image URL" 
+                          className="flex-1"
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Browse
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -617,12 +717,12 @@ const MosqueRegistrationForm = () => {
             </div>
             
             <div>
-              <FormLabel>Additional Images (URLs, comma separated)</FormLabel>
+              <FormLabel>Additional Images (Optional)</FormLabel>
               <div className="flex items-center justify-center w-full">
                 <div className="flex flex-col w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:bg-neutral-light cursor-pointer">
                   <div className="flex flex-col items-center justify-center pt-7">
                     <i className="fas fa-images text-3xl text-neutral-dark/50 mb-2"></i>
-                    <p className="text-sm text-neutral-dark">Optional additional image URLs</p>
+                    <p className="text-sm text-neutral-dark">Optional additional images</p>
                   </div>
                 </div>
               </div>

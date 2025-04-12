@@ -1,0 +1,126 @@
+Geolocation error: 2 
+at t.value (https://e7435e97-9b58-47ca-9f6e-0a45b25af30c-00-30nbzxhuoaf99.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://e7435e97-9b58-47ca-9f6e-0a45b25af30c-00-30nbzxhuoaf99.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://e7435e97-9b58-47ca-9f6e-0a45b25af30c-00-30nbzxhuoaf99.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://e7435e97-9b58-47ca-9f6e-0a45b25af30c-00-30nbzxhuoaf99.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+MosqueTime
+Home
+Find Mosques
+Register Mosque
+Login
+Find Nearby Mosques & Prayer Times
+Connect with mosques in your area, get accurate prayer times, and stay updated with community events - all in one app.
+
+Find Nearby Mosques
+Register Your Mosque
+Current Location
+Today's Prayer Times
+Current Location · April 12, 2025
+
+Fajr
+04:15 AM
+Dhuhr
+12:20 PM
+Asr
+04:45 PM
+Maghrib
+07:38 PM
+Isha
+09:10 PM
+Jumu'ah
+01:30 PM
+Our Features
+How MosqueTime Helps
+Connecting worshippers to mosques and accurate prayer times with innovative technology.
+
+Find Nearby Mosques
+Easily locate mosques near you with accurate directions and detailed information.
+
+Accurate Prayer Times
+Get precise prayer timings directly from local mosques with notifications.
+
+Community Events
+Stay updated with mosque events like Jummah, Eid prayers, and educational programs.
+
+Simple Process
+How It Works
+Finding mosques and prayer times has never been easier.
+
+1
+Enable Location
+Allow location access or enter your address to find nearby mosques.
+
+2
+Explore Mosques
+Browse mosque details, prayer times, and upcoming events.
+
+3
+Get Directions
+Navigate to your chosen mosque with easy-to-follow directions.
+
+Get Started
+Testimonials
+What People Say
+Hear from our community about how MosqueTime has helped them.
+
+MosqueTime has made it so easy to find prayer times and locate mosques when I'm traveling. It's an essential app for every Muslim.
+
+A
+Ahmed S.
+New York, USA
+
+As a mosque administrator, I can easily update our prayer times and upcoming events. This has been incredibly helpful in keeping our community informed.
+
+F
+Fatima K.
+Chicago, USA
+
+The Qibla direction feature is incredibly accurate. This app has made my daily prayers so much more convenient, especially when traveling.
+
+M
+Mohammed A.
+Toronto, Canada
+
+Mobile App
+Download the MosqueTime App
+Take MosqueTime with you wherever you go. Access prayer times, find mosques, and set reminders for daily prayers directly from your smartphone.
+
+Download on the
+App Store
+GET IT ON
+Google Play
+A
+M
+S
+Trusted by
+10,000+ Muslims
+MosqueTime Mobile AppFind Prayer Times Anywhere!
+Ready to Connect with Your Local Muslim Community?
+Join thousands of Muslims using MosqueTime to find nearby mosques, accurate prayer times, and community events.
+
+Find Nearby Mosques
+Register Your Mosque
+MosqueTime
+Connecting Muslims to mosques and accurate prayer times globally.
+
+Quick Links
+Home
+Find Mosques
+Register Mosque
+About Us
+Contact
+Features
+Prayer Times
+Mosque Finder
+Qibla Direction
+Islamic Calendar
+Community Events
+Contact Us
+123 Islamic Way, New York, NY 10001
+info@mosquetime.com
++1 (555) 123-4567
+© 2025 MosqueTime. All rights reserved.
+
+Privacy Policy
+Terms of Service
+Cookie Policy

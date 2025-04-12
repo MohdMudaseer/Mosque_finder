@@ -40,23 +40,56 @@ export interface MosquePrayerTimes {
   updatedAt: string | Date;
 }
 
+// Default coordinates for New York (Central Park) to use as fallback
+export const DEFAULT_LATITUDE = 40.785091;
+export const DEFAULT_LONGITUDE = -73.968285;
+
+export interface FallbackPosition {
+  coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+  timestamp: number;
+}
+
 // Get user's current position
-export const getCurrentPosition = (): Promise<GeolocationPosition> => {
-  return new Promise((resolve, reject) => {
+export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosition> => {
+  return new Promise((resolve) => {
+    // Create a fallback position (New York City)
+    const createFallbackPosition = (): FallbackPosition => {
+      return {
+        coords: {
+          latitude: DEFAULT_LATITUDE,
+          longitude: DEFAULT_LONGITUDE,
+          accuracy: 1000,
+        },
+        timestamp: Date.now(),
+      };
+    };
+  
     if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported by your browser'));
+      console.warn('Geolocation is not supported by your browser. Using fallback position.');
+      resolve(createFallbackPosition());
     } else {
+      // Set a timeout in case geolocation takes too long
+      const timeoutId = setTimeout(() => {
+        console.warn('Geolocation timed out. Using fallback position.');
+        resolve(createFallbackPosition());
+      }, 5000);
+      
       const successCallback = (position: GeolocationPosition) => {
+        clearTimeout(timeoutId);
         console.log("Position successfully obtained:", position.coords);
         resolve(position);
       };
       
       const errorCallback = (error: GeolocationPositionError) => {
+        clearTimeout(timeoutId);
         console.error("Geolocation error:", error.code, error.message);
-        // Error code 1 = permission denied
-        // Error code 2 = position unavailable
-        // Error code 3 = timeout
-        reject(error);
+        // Use fallback for any error (permission denied, position unavailable, timeout)
+        console.warn('Using fallback position due to geolocation error.');
+        resolve(createFallbackPosition());
       };
       
       navigator.geolocation.getCurrentPosition(
@@ -64,7 +97,7 @@ export const getCurrentPosition = (): Promise<GeolocationPosition> => {
         errorCallback,
         {
           enableHighAccuracy: true,
-          timeout: 10000, // Increased timeout to 10s
+          timeout: 10000,
           maximumAge: 0
         }
       );

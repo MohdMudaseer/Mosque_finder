@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { getCurrentPosition } from "@/lib/maps";
+import { getCurrentPosition, DEFAULT_LATITUDE, DEFAULT_LONGITUDE } from "@/lib/maps";
 
 const formSchema = insertMosqueSchema.extend({
   confirmAuthorized: z.boolean().refine(val => val === true, {
@@ -186,11 +186,23 @@ const MosqueRegistrationForm = () => {
       const position = await getCurrentPosition();
       form.setValue("latitude", position.coords.latitude.toString());
       form.setValue("longitude", position.coords.longitude.toString());
-      toast({
-        title: "Location Retrieved",
-        description: "We've set your current location coordinates.",
-      });
+      
+      // If we have default/fallback values, let the user know
+      if (position.coords.latitude === DEFAULT_LATITUDE && 
+          position.coords.longitude === DEFAULT_LONGITUDE) {
+        toast({
+          title: "Using Default Location",
+          description: "We're using default coordinates (New York City). You can manually update the coordinates if needed.",
+        });
+      } else {
+        toast({
+          title: "Location Retrieved",
+          description: "We've set your current location coordinates.",
+        });
+      }
     } catch (error) {
+      // This should never happen now since we always return a position object
+      // with fallback values, but we'll keep this for extra safety
       toast({
         title: "Location Error",
         description: "Could not get your location. Please enter coordinates manually.",

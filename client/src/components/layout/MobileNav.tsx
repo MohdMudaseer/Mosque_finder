@@ -20,7 +20,9 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link href="/">
             <a className="flex items-center">
-              <div className="mosque-dome mr-2 w-8 h-6"></div>
+              <div className="bg-primary/10 p-2 rounded-full mr-2">
+                <i className="fas fa-mosque text-white text-xl"></i>
+              </div>
               <h1 className="font-heading text-lg font-bold">MosqueTime</h1>
             </a>
           </Link>

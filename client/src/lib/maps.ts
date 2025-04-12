@@ -97,23 +97,38 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
         resolveSafely(createFallbackPosition());
       };
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          clearTimeout(timeoutId);
-          if (position?.coords?.latitude && position?.coords?.longitude) {
-            console.log("Position obtained:", position.coords);
-            resolveSafely(position);
-          } else {
-            console.warn('Invalid position data. Using fallback.');
-            resolveSafely(createFallbackPosition());
+      // Try high accuracy first, then fall back to low accuracy if needed
+      const tryGeolocation = (highAccuracy: boolean) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            clearTimeout(timeoutId);
+            if (position?.coords?.latitude && position?.coords?.longitude) {
+              console.log("Position obtained:", position.coords);
+              resolveSafely(position);
+            } else {
+              console.warn('Invalid position data. Using fallback.');
+              resolveSafely(createFallbackPosition());
+            }
+          },
+          (error) => {
+            if (highAccuracy && error.code === error.TIMEOUT) {
+              // If high accuracy times out, try again with low accuracy
+              console.log("High accuracy timeout, trying low accuracy...");
+              tryGeolocation(false);
+            } else {
+              errorHandler(error);
+            }
+          },
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: highAccuracy ? 10000 : 20000, // 10s for high accuracy, 20s for low
+            maximumAge: 300000 // Cache position for 5 minutes
           }
-        },
-        errorHandler,
-        {
-          enableHighAccuracy: false, // Set to false for faster response
-          timeout: 15000, // Increased timeout
-          maximumAge: 600000 // Cache position for 10 minutes
-        }
+        );
+      };
+
+      // Start with high accuracy
+      tryGeolocation(true);
       );
     } catch (error) {
       clearTimeout(timeoutId);

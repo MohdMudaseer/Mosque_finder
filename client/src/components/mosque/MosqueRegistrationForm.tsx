@@ -15,18 +15,28 @@ const formSchema = insertMosqueSchema.extend({
   confirmAuthorized: z.boolean().refine(val => val === true, {
     message: "You must confirm that you are authorized to represent this mosque",
   }),
-  // For prayer times
-  fajr: z.string().min(1, { message: "Fajr time is required" }),
-  dhuhr: z.string().min(1, { message: "Dhuhr time is required" }),
-  asr: z.string().min(1, { message: "Asr time is required" }),
-  maghrib: z.string().min(1, { message: "Maghrib time is required" }),
-  isha: z.string().min(1, { message: "Isha time is required" }),
+  // For prayer times (Azaan/Adhan times)
+  fajrAzaan: z.string().min(1, { message: "Fajr Azaan time is required" }),
+  dhuhrAzaan: z.string().min(1, { message: "Dhuhr Azaan time is required" }),
+  asrAzaan: z.string().min(1, { message: "Asr Azaan time is required" }),
+  maghribAzaan: z.string().min(1, { message: "Maghrib Azaan time is required" }),
+  ishaAzaan: z.string().min(1, { message: "Isha Azaan time is required" }),
+  
+  // For prayer times (Jamaat/Namaz times)
+  fajr: z.string().min(1, { message: "Fajr Jamaat time is required" }),
+  dhuhr: z.string().min(1, { message: "Dhuhr Jamaat time is required" }),
+  asr: z.string().min(1, { message: "Asr Jamaat time is required" }),
+  maghrib: z.string().min(1, { message: "Maghrib Jamaat time is required" }),
+  isha: z.string().min(1, { message: "Isha Jamaat time is required" }),
   jummuah: z.string().optional(),
   fajrDays: z.string().default("Daily"),
   dhuhrDays: z.string().default("Daily"),
   asrDays: z.string().default("Daily"),
   maghribDays: z.string().default("Daily"),
   ishaDays: z.string().default("Daily"),
+  
+  // For image upload
+  imageFile: z.instanceof(File).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -36,6 +46,9 @@ const MosqueRegistrationForm = () => {
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,6 +68,13 @@ const MosqueRegistrationForm = () => {
       hasQuranClasses: false,
       hasCommunityHall: false,
       confirmAuthorized: false,
+      // Azaan times
+      fajrAzaan: "",
+      dhuhrAzaan: "",
+      asrAzaan: "",
+      maghribAzaan: "",
+      ishaAzaan: "",
+      // Jamaat times
       fajr: "",
       dhuhr: "",
       asr: "",
@@ -69,6 +89,22 @@ const MosqueRegistrationForm = () => {
     },
   });
 
+  // Function to handle image file selection
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Set the file in the form
+      form.setValue('imageFile', file);
+      
+      // Create a preview URL
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+      
+      // We still need to keep imageUrl for now as our backend expects it
+      form.setValue('imageUrl', 'uploaded_image.jpg');
+    }
+  };
+  
   const createMosque = useMutation({
     mutationFn: async (data: FormData) => {
       setSubmitting(true);
@@ -76,24 +112,45 @@ const MosqueRegistrationForm = () => {
       // Extract prayer time data
       const { 
         fajr, dhuhr, asr, maghrib, isha, jummuah,
+        fajrAzaan, dhuhrAzaan, asrAzaan, maghribAzaan, ishaAzaan,
         fajrDays, dhuhrDays, asrDays, maghribDays, ishaDays,
-        confirmAuthorized, 
+        confirmAuthorized, imageFile,
         ...mosqueData 
       } = data;
       
+      // In a real implementation, we would upload the image file
+      // to a cloud storage service and get a URL back
+      let finalImageUrl = data.imageUrl;
+      if (imageFile) {
+        // Here we would upload the file and get the URL
+        // For now we'll just use the default
+        console.log("Would upload file:", imageFile.name);
+      }
+      
       // First create the mosque
-      const response = await apiRequest("POST", "/api/mosques", mosqueData);
+      const response = await apiRequest("POST", "/api/mosques", {
+        ...mosqueData,
+        imageUrl: finalImageUrl
+      });
       const mosque = await response.json();
       
       // Then create prayer times for the mosque
       const prayerTimesResponse = await apiRequest("POST", `/api/mosques/${mosque.id}/prayer-times`, {
         mosqueId: mosque.id,
+        // Jamaat times
         fajr,
         dhuhr,
         asr,
         maghrib,
         isha,
         jummuah,
+        // Azaan times
+        fajrAzaan,
+        dhuhrAzaan,
+        asrAzaan,
+        maghribAzaan,
+        ishaAzaan,
+        // Prayer days
         fajrDays,
         dhuhrDays,
         asrDays,
@@ -110,9 +167,11 @@ const MosqueRegistrationForm = () => {
         description: "Mosque registration submitted for verification.",
       });
       form.reset();
+      setImagePreview(null);
       setSubmitting(false);
     },
     onError: (error) => {
+      console.error("Submission error:", error);
       toast({
         title: "Error",
         description: "Failed to register mosque. Please try again.",
@@ -128,21 +187,31 @@ const MosqueRegistrationForm = () => {
 
   const getLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        form.setValue("latitude", position.coords.latitude.toString());
-        form.setValue("longitude", position.coords.longitude.toString());
-        
-        toast({
-          title: "Location Found",
-          description: "Your current coordinates have been added to the form.",
-        });
-      }, () => {
-        toast({
-          title: "Location Error",
-          description: "Unable to get your location. Please enter coordinates manually.",
-          variant: "destructive",
-        });
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Got position:", position.coords);
+          form.setValue("latitude", position.coords.latitude.toString());
+          form.setValue("longitude", position.coords.longitude.toString());
+          
+          toast({
+            title: "Location Found",
+            description: "Your current coordinates have been added to the form.",
+          });
+        }, 
+        (error) => {
+          console.error("Geolocation error:", error.code, error.message);
+          toast({
+            title: "Location Error",
+            description: "Unable to get your location. Please enter coordinates manually.",
+            variant: "destructive",
+          });
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
     } else {
       toast({
         title: "Geolocation Not Supported",

@@ -46,11 +46,28 @@ export const getCurrentPosition = (): Promise<GeolocationPosition> => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported by your browser'));
     } else {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      });
+      const successCallback = (position: GeolocationPosition) => {
+        console.log("Position successfully obtained:", position.coords);
+        resolve(position);
+      };
+      
+      const errorCallback = (error: GeolocationPositionError) => {
+        console.error("Geolocation error:", error.code, error.message);
+        // Error code 1 = permission denied
+        // Error code 2 = position unavailable
+        // Error code 3 = timeout
+        reject(error);
+      };
+      
+      navigator.geolocation.getCurrentPosition(
+        successCallback,
+        errorCallback,
+        {
+          enableHighAccuracy: true,
+          timeout: 10000, // Increased timeout to 10s
+          maximumAge: 0
+        }
+      );
     }
   });
 };

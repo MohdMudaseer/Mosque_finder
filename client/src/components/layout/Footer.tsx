@@ -12,21 +12,24 @@ export function Footer() {
           {/* Logo and About */}
           <div className="md:col-span-1">
             <div className="flex items-center mb-6">
-              <div className="mosque-dome mr-3"></div>
-              <span className="font-heading text-2xl font-bold text-primary">MosqueTime</span>
+              <div className="mosque-dome"></div>
+              <div className="ml-3">
+                <span className="font-heading text-2xl font-bold text-primary block">MosqueTime</span>
+                <span className="text-sm text-muted-foreground">Prayer Times & More</span>
+              </div>
             </div>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-6 leading-relaxed">
               Connecting Muslims to mosques and providing accurate prayer times globally. Your trusted companion for spiritual guidance.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
-                <i className="fab fa-facebook-f text-xl"></i>
+              <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
+                <i className="fab fa-facebook-f"></i>
               </a>
-              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
-                <i className="fab fa-twitter text-xl"></i>
+              <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
+                <i className="fab fa-twitter"></i>
               </a>
-              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
-                <i className="fab fa-instagram text-xl"></i>
+              <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
+                <i className="fab fa-instagram"></i>
               </a>
             </div>
           </div>
@@ -36,26 +39,26 @@ export function Footer() {
             <h3 className="font-heading font-bold text-xl mb-6 text-primary">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center group">
+                  <i className="fas fa-chevron-right text-xs mr-2 transition-transform group-hover:translate-x-1"></i>
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/find-mosques" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
+                <Link href="/find-mosques" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center group">
+                  <i className="fas fa-chevron-right text-xs mr-2 transition-transform group-hover:translate-x-1"></i>
                   Find Mosques
                 </Link>
               </li>
               <li>
-                <Link href="/register-mosque" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
+                <Link href="/register-mosque" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center group">
+                  <i className="fas fa-chevron-right text-xs mr-2 transition-transform group-hover:translate-x-1"></i>
                   Register Mosque
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center group">
+                  <i className="fas fa-chevron-right text-xs mr-2 transition-transform group-hover:translate-x-1"></i>
                   About Us
                 </a>
               </li>
@@ -68,25 +71,25 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-clock mr-2"></i>
+                  <i className="fas fa-clock mr-3 w-5 text-primary/70"></i>
                   Prayer Times
                 </a>
               </li>
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-mosque mr-2"></i>
+                  <i className="fas fa-mosque mr-3 w-5 text-primary/70"></i>
                   Mosque Finder
                 </a>
               </li>
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-compass mr-2"></i>
+                  <i className="fas fa-compass mr-3 w-5 text-primary/70"></i>
                   Qibla Direction
                 </a>
               </li>
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
-                  <i className="fas fa-calendar-alt mr-2"></i>
+                  <i className="fas fa-calendar-alt mr-3 w-5 text-primary/70"></i>
                   Islamic Calendar
                 </a>
               </li>
@@ -98,17 +101,17 @@ export function Footer() {
             <h3 className="font-heading font-bold text-xl mb-6 text-primary">Contact Us</h3>
             <ul className="space-y-4">
               <li className="flex items-start">
-                <i className="fas fa-map-marker-alt text-primary mt-1 mr-3"></i>
+                <i className="fas fa-map-marker-alt text-primary mt-1.5 mr-3 w-5"></i>
                 <span className="text-muted-foreground">123 Islamic Way<br/>New York, NY 10001</span>
               </li>
-              <li className="flex items-start">
-                <i className="fas fa-envelope text-primary mt-1 mr-3"></i>
+              <li className="flex items-center">
+                <i className="fas fa-envelope text-primary mr-3 w-5"></i>
                 <a href="mailto:info@mosquetime.com" className="text-muted-foreground hover:text-primary transition-colors">
                   info@mosquetime.com
                 </a>
               </li>
-              <li className="flex items-start">
-                <i className="fas fa-phone text-primary mt-1 mr-3"></i>
+              <li className="flex items-center">
+                <i className="fas fa-phone text-primary mr-3 w-5"></i>
                 <a href="tel:+15551234567" className="text-muted-foreground hover:text-primary transition-colors">
                   +1 (555) 123-4567
                 </a>

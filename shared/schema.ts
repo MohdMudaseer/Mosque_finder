@@ -55,12 +55,20 @@ export const insertMosqueSchema = createInsertSchema(mosques).omit({
 export const prayerTimes = pgTable("prayer_times", {
   id: serial("id").primaryKey(),
   mosqueId: integer("mosque_id").references(() => mosques.id).notNull(),
+  // Jamaat times (prayer congregation)
   fajr: text("fajr").notNull(),
   dhuhr: text("dhuhr").notNull(),
   asr: text("asr").notNull(),
   maghrib: text("maghrib").notNull(),
   isha: text("isha").notNull(),
   jummuah: text("jummuah"),
+  // Azaan/Adhan times (call to prayer)
+  fajrAzaan: text("fajr_azaan").notNull(),
+  dhuhrAzaan: text("dhuhr_azaan").notNull(),
+  asrAzaan: text("asr_azaan").notNull(),
+  maghribAzaan: text("maghrib_azaan").notNull(),
+  ishaAzaan: text("isha_azaan").notNull(),
+  // Days when prayers are held
   fajrDays: text("fajr_days").default("Daily"),
   dhuhrDays: text("dhuhr_days").default("Daily"),
   asrDays: text("asr_days").default("Daily"),

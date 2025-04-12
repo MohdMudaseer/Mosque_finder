@@ -1,3 +1,4 @@
+
 // Type definition for mosque data
 export interface Mosque {
   id: number;
@@ -112,7 +113,6 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
           },
           (error) => {
             if (highAccuracy && error.code === error.TIMEOUT) {
-              // If high accuracy times out, try again with low accuracy
               console.log("High accuracy timeout, trying low accuracy...");
               tryGeolocation(false);
             } else {
@@ -121,15 +121,13 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
           },
           {
             enableHighAccuracy: highAccuracy,
-            timeout: highAccuracy ? 10000 : 20000, // 10s for high accuracy, 20s for low
-            maximumAge: 300000 // Cache position for 5 minutes
+            timeout: highAccuracy ? 10000 : 20000,
+            maximumAge: 300000
           }
         );
       };
 
-      // Start with high accuracy
       tryGeolocation(true);
-      );
     } catch (error) {
       clearTimeout(timeoutId);
       console.error("Unexpected geolocation error:", error);
@@ -144,8 +142,6 @@ export const getLocationName = async (
   longitude: number
 ): Promise<string> => {
   try {
-    // In a real app, you would use a service like Google Maps Geocoding API
-    // For this example, we'll just return a placeholder
     return "Current Location";
   } catch (error) {
     console.error('Error getting location name:', error);
@@ -158,11 +154,9 @@ export const formatDistance = (distanceInKm?: number): string => {
   if (distanceInKm === undefined) return '';
 
   if (distanceInKm < 1) {
-    // Convert to meters and round
     const meters = Math.round(distanceInKm * 1000);
     return `${meters} m`;
   }
 
-  // Round to one decimal place
   return `${distanceInKm.toFixed(1)} km`;
 };

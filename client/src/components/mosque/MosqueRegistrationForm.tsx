@@ -123,14 +123,18 @@ const MosqueRegistrationForm = () => {
         hasCommunityHall: data.hasCommunityHall,
       };
       
-      const response = await apiRequest("/api/mosques", {
-        method: "POST",
-        body: JSON.stringify(mosqueData),
-      });
+      const response = await apiRequest(
+        "POST",
+        "/api/mosques", 
+        mosqueData
+      );
+      
+      // Parse the response to JSON to get the ID
+      const createdMosque = await response.json();
       
       // Then create prayer times
       const prayerTimesData = {
-        mosqueId: response.id,
+        mosqueId: createdMosque.id,
         fajrAzaan: data.fajrAzaan,
         dhuhrAzaan: data.dhuhrAzaan,
         asrAzaan: data.asrAzaan,
@@ -149,10 +153,11 @@ const MosqueRegistrationForm = () => {
         ishaDays: data.ishaDays,
       };
       
-      await apiRequest(`/api/mosques/${response.id}/prayer-times`, {
-        method: "POST",
-        body: JSON.stringify(prayerTimesData),
-      });
+      await apiRequest(
+        "POST",
+        `/api/mosques/${createdMosque.id}/prayer-times`, 
+        prayerTimesData
+      );
       
       return response;
     },

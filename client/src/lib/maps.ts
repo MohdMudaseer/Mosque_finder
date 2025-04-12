@@ -89,11 +89,11 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
       const errorHandler = (error: GeolocationPositionError) => {
         clearTimeout(timeoutId);
         const errorMessages = {
-          1: "Permission denied. Please allow location access.",
-          2: "Position unavailable. Check your device's location settings.",
+          1: "Permission denied. Please allow location access in your browser.",
+          2: "Position unavailable. Using default location. Try refreshing the page or check if location is enabled in your browser.",
           3: "Request timeout. Please try again."
         };
-        console.error("Geolocation error:", error.code, errorMessages[error.code as 1|2|3]);
+        console.warn("Geolocation status:", errorMessages[error.code as 1|2|3]);
         resolveSafely(createFallbackPosition());
       };
 
@@ -110,9 +110,9 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
         },
         errorHandler,
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // Cache position for 5 minutes
+          enableHighAccuracy: false, // Set to false for faster response
+          timeout: 15000, // Increased timeout
+          maximumAge: 600000 // Cache position for 10 minutes
         }
       );
     } catch (error) {

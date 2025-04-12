@@ -67,7 +67,7 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
         timestamp: Date.now(),
       };
     };
-  
+
     if (!navigator.geolocation) {
       console.warn('Geolocation is not supported by your browser. Using fallback position.');
       resolve(createFallbackPosition());
@@ -77,13 +77,13 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
         console.warn('Geolocation timed out. Using fallback position.');
         resolve(createFallbackPosition());
       }, 5000);
-      
+
       const successCallback = (position: GeolocationPosition) => {
         clearTimeout(timeoutId);
         console.log("Position successfully obtained:", position.coords);
         resolve(position);
       };
-      
+
       const errorCallback = (error: GeolocationPositionError) => {
         clearTimeout(timeoutId);
         console.error("Geolocation error:", error.code, error.message);
@@ -91,7 +91,7 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
         console.warn('Using fallback position due to geolocation error.');
         resolve(createFallbackPosition());
       };
-      
+
       navigator.geolocation.getCurrentPosition(
         successCallback,
         errorCallback,
@@ -123,13 +123,13 @@ export const getLocationName = async (
 // Format distance for display
 export const formatDistance = (distanceInKm?: number): string => {
   if (distanceInKm === undefined) return '';
-  
+
   if (distanceInKm < 1) {
     // Convert to meters and round
     const meters = Math.round(distanceInKm * 1000);
     return `${meters} m`;
   }
-  
+
   // Round to one decimal place
   return `${distanceInKm.toFixed(1)} km`;
 };

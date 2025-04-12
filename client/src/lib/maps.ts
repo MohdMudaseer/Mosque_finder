@@ -86,10 +86,21 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
     }, 5000);
 
     try {
+      const errorHandler = (error: GeolocationPositionError) => {
+        clearTimeout(timeoutId);
+        const errorMessages = {
+          1: "Permission denied. Please allow location access.",
+          2: "Position unavailable. Check your device's location settings.",
+          3: "Request timeout. Please try again."
+        };
+        console.error("Geolocation error:", error.code, errorMessages[error.code as 1|2|3]);
+        resolveSafely(createFallbackPosition());
+      };
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           clearTimeout(timeoutId);
-          if (position && position.coords) {
+          if (position?.coords?.latitude && position?.coords?.longitude) {
             console.log("Position obtained:", position.coords);
             resolveSafely(position);
           } else {
@@ -97,15 +108,11 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosi
             resolveSafely(createFallbackPosition());
           }
         },
-        (error) => {
-          clearTimeout(timeoutId);
-          console.error("Geolocation error:", error.code, error.message);
-          resolveSafely(createFallbackPosition());
-        },
+        errorHandler,
         {
-          enableHighAccuracy: false, // Set to false for faster response
-          timeout: 5000,
-          maximumAge: 60000 // Cache position for 1 minute
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // Cache position for 5 minutes
         }
       );
     } catch (error) {

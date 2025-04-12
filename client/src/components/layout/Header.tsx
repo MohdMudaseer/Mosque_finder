@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
 const Header = () => {
-  const [location] = useLocation();
+  const location = useLocation();
 
   return (
     <header className="bg-primary text-white shadow-md hidden md:block">

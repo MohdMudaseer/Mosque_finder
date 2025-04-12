@@ -8,7 +8,9 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
           <a className="flex items-center">
-            <div className="mosque-dome mr-2"></div>
+            <div className="bg-primary/20 p-2 rounded-full mr-2">
+              <i className="fas fa-mosque text-primary text-2xl"></i>
+            </div>
             <h1 className="font-heading text-2xl font-bold">MosqueTime</h1>
           </a>
         </Link>

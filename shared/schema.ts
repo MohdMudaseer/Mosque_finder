@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -89,6 +90,34 @@ export const insertEventSchema = createInsertSchema(events).omit({
   id: true,
   createdAt: true,
 });
+
+// Relations definitions
+export const usersRelations = relations(users, ({ many }) => ({
+  mosques: many(mosques),
+}));
+
+export const mosquesRelations = relations(mosques, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [mosques.createdBy],
+    references: [users.id],
+  }),
+  prayerTimes: many(prayerTimes),
+  events: many(events),
+}));
+
+export const prayerTimesRelations = relations(prayerTimes, ({ one }) => ({
+  mosque: one(mosques, {
+    fields: [prayerTimes.mosqueId],
+    references: [mosques.id],
+  }),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  mosque: one(mosques, {
+    fields: [events.mosqueId],
+    references: [mosques.id],
+  }),
+}));
 
 // Type definitions
 export type User = typeof users.$inferSelect;

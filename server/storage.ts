@@ -1,5 +1,7 @@
 import { users, mosques, prayerTimes, events } from "@shared/schema";
 import type { User, InsertUser, Mosque, InsertMosque, PrayerTime, InsertPrayerTime, Event, InsertEvent } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -342,4 +344,167 @@ export class MemStorage implements IStorage {
   }
 }
 
+export class DatabaseStorage implements IStorage {
+  // Helper functions for distance calculation
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    // Simple implementation of Haversine formula to calculate distance in km
+    const R = 6371; // Radius of the earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  // Mosque methods
+  async getMosque(id: number): Promise<Mosque | undefined> {
+    const result = await db.select().from(mosques).where(eq(mosques.id, id));
+    return result[0];
+  }
+
+  async getMosques(): Promise<Mosque[]> {
+    return await db.select().from(mosques);
+  }
+
+  async getMosquesByCity(city: string): Promise<Mosque[]> {
+    return await db.select().from(mosques).where(eq(sql`LOWER(${mosques.city})`, city.toLowerCase()));
+  }
+
+  async getNearbyMosques(lat: number, lng: number, radius: number): Promise<Mosque[]> {
+    // First, get all mosques
+    const allMosques = await db.select().from(mosques);
+    
+    // Then, calculate distances and filter
+    const result = allMosques.map(mosque => {
+      const distance = this.calculateDistance(
+        lat,
+        lng,
+        parseFloat(mosque.latitude),
+        parseFloat(mosque.longitude)
+      );
+      return { mosque, distance };
+    })
+    .filter(item => item.distance <= radius)
+    .sort((a, b) => a.distance - b.distance)
+    .map(item => {
+      return {
+        ...item.mosque,
+        distance: item.distance
+      };
+    });
+
+    return result;
+  }
+
+  async createMosque(insertMosque: InsertMosque): Promise<Mosque> {
+    const result = await db.insert(mosques).values(insertMosque).returning();
+    return result[0];
+  }
+
+  async updateMosque(id: number, mosque: Partial<Mosque>): Promise<Mosque | undefined> {
+    const result = await db.update(mosques)
+      .set(mosque)
+      .where(eq(mosques.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async verifyMosque(id: number): Promise<Mosque | undefined> {
+    const result = await db.update(mosques)
+      .set({ isVerified: true })
+      .where(eq(mosques.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Prayer Times methods
+  async getPrayerTimes(mosqueId: number): Promise<PrayerTime | undefined> {
+    const result = await db.select()
+      .from(prayerTimes)
+      .where(eq(prayerTimes.mosqueId, mosqueId));
+    return result[0];
+  }
+
+  async createPrayerTimes(insertPrayerTime: InsertPrayerTime): Promise<PrayerTime> {
+    const result = await db.insert(prayerTimes)
+      .values(insertPrayerTime)
+      .returning();
+    return result[0];
+  }
+
+  async updatePrayerTimes(id: number, prayerTime: Partial<PrayerTime>): Promise<PrayerTime | undefined> {
+    const result = await db.update(prayerTimes)
+      .set({ ...prayerTime, updatedAt: new Date() })
+      .where(eq(prayerTimes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Event methods
+  async getEvents(mosqueId: number): Promise<Event[]> {
+    return await db.select()
+      .from(events)
+      .where(eq(events.mosqueId, mosqueId));
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    const result = await db.select()
+      .from(events)
+      .where(eq(events.id, id));
+    return result[0];
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const result = await db.insert(events)
+      .values(insertEvent)
+      .returning();
+    return result[0];
+  }
+
+  async updateEvent(id: number, event: Partial<Event>): Promise<Event | undefined> {
+    const result = await db.update(events)
+      .set(event)
+      .where(eq(events.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    const result = await db.delete(events)
+      .where(eq(events.id, id))
+      .returning();
+    return result.length > 0;
+  }
+}
+
+// For initial data we'll use the MemStorage temporarily just for setup - we'll switch to database after pushing
 export const storage = new MemStorage();

@@ -769,6 +769,10 @@ const MosqueRegistrationForm = () => {
           type="submit" 
           className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-md w-full md:w-auto"
           disabled={submitting}
+          onClick={(e) => {
+            e.preventDefault();
+            form.handleSubmit(onSubmit)();
+          }}
         >
           {submitting ? (
             <>

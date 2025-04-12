@@ -1,63 +1,62 @@
+
 import React from "react";
 import { Link } from "wouter";
-import { ExternalLink } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-primary/10 border-t border-primary/20">
+    <footer className="bg-background border-t border-primary/10">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and About */}
           <div className="md:col-span-1">
-            <div className="flex items-center mb-4">
-              <i className="fas fa-mosque text-primary text-2xl mr-2"></i>
-              <span className="font-heading text-xl font-bold text-primary">MosqueTime</span>
+            <div className="flex items-center mb-6">
+              <div className="mosque-dome mr-3"></div>
+              <span className="font-heading text-2xl font-bold text-primary">MosqueTime</span>
             </div>
-            <p className="text-neutral-dark/80 mb-4">
-              Connecting Muslims to mosques and accurate prayer times globally.
+            <p className="text-muted-foreground mb-6">
+              Connecting Muslims to mosques and providing accurate prayer times globally. Your trusted companion for spiritual guidance.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-primary hover:text-primary/80">
-                <i className="fab fa-facebook-f"></i>
+              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
+                <i className="fab fa-facebook-f text-xl"></i>
               </a>
-              <a href="#" className="text-primary hover:text-primary/80">
-                <i className="fab fa-twitter"></i>
+              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
+                <i className="fab fa-twitter text-xl"></i>
               </a>
-              <a href="#" className="text-primary hover:text-primary/80">
-                <i className="fab fa-instagram"></i>
+              <a href="#" className="text-primary hover:text-primary/80 transition-colors">
+                <i className="fab fa-instagram text-xl"></i>
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="md:col-span-1">
-            <h3 className="font-heading font-bold text-lg mb-4 text-neutral-dark">Quick Links</h3>
-            <ul className="space-y-2">
+            <h3 className="font-heading font-bold text-xl mb-6 text-primary">Quick Links</h3>
+            <ul className="space-y-3">
               <li>
-                <Link href="/" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/find-mosques" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <Link href="/find-mosques" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
                   Find Mosques
                 </Link>
               </li>
               <li>
-                <Link href="/register-mosque" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <Link href="/register-mosque" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
                   Register Mosque
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-chevron-right mr-2 text-xs"></i>
                   About Us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
-                  Contact
                 </a>
               </li>
             </ul>
@@ -65,31 +64,30 @@ export function Footer() {
 
           {/* Features */}
           <div className="md:col-span-1">
-            <h3 className="font-heading font-bold text-lg mb-4 text-neutral-dark">Features</h3>
-            <ul className="space-y-2">
+            <h3 className="font-heading font-bold text-xl mb-6 text-primary">Features</h3>
+            <ul className="space-y-3">
               <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-clock mr-2"></i>
                   Prayer Times
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-mosque mr-2"></i>
                   Mosque Finder
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-compass mr-2"></i>
                   Qibla Direction
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center">
+                  <i className="fas fa-calendar-alt mr-2"></i>
                   Islamic Calendar
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-neutral-dark/80 hover:text-primary transition-colors">
-                  Community Events
                 </a>
               </li>
             </ul>
@@ -97,37 +95,41 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="md:col-span-1">
-            <h3 className="font-heading font-bold text-lg mb-4 text-neutral-dark">Contact Us</h3>
-            <ul className="space-y-3">
+            <h3 className="font-heading font-bold text-xl mb-6 text-primary">Contact Us</h3>
+            <ul className="space-y-4">
               <li className="flex items-start">
                 <i className="fas fa-map-marker-alt text-primary mt-1 mr-3"></i>
-                <span className="text-neutral-dark/80">123 Islamic Way, New York, NY 10001</span>
+                <span className="text-muted-foreground">123 Islamic Way<br/>New York, NY 10001</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-envelope text-primary mt-1 mr-3"></i>
-                <span className="text-neutral-dark/80">info@mosquetime.com</span>
+                <a href="mailto:info@mosquetime.com" className="text-muted-foreground hover:text-primary transition-colors">
+                  info@mosquetime.com
+                </a>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-phone text-primary mt-1 mr-3"></i>
-                <span className="text-neutral-dark/80">+1 (555) 123-4567</span>
+                <a href="tel:+15551234567" className="text-muted-foreground hover:text-primary transition-colors">
+                  +1 (555) 123-4567
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-primary/20 mt-12 pt-6">
+        <div className="border-t border-primary/10 mt-12 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-neutral-dark/70 text-sm mb-4 md:mb-0">
+            <p className="text-muted-foreground text-sm mb-4 md:mb-0">
               &copy; {currentYear} MosqueTime. All rights reserved.
             </p>
             <div className="flex space-x-6">
-              <a href="#" className="text-neutral-dark/70 text-sm hover:text-primary transition-colors">
+              <a href="#" className="text-muted-foreground text-sm hover:text-primary transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="text-neutral-dark/70 text-sm hover:text-primary transition-colors">
+              <a href="#" className="text-muted-foreground text-sm hover:text-primary transition-colors">
                 Terms of Service
               </a>
-              <a href="#" className="text-neutral-dark/70 text-sm hover:text-primary transition-colors">
+              <a href="#" className="text-muted-foreground text-sm hover:text-primary transition-colors">
                 Cookie Policy
               </a>
             </div>

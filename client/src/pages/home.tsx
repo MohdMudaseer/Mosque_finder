@@ -21,23 +21,37 @@ const Home = () => {
     async function loadPrayerTimes() {
       try {
         setLoading(true);
-        // Get user's current position
-        const position = await getCurrentPosition();
         
-        // Get location name
-        const locationName = await getLocationName(
-          position.coords.latitude,
-          position.coords.longitude
-        );
-        setLocation(locationName);
-        
-        // Get prayer times
-        const times = await getCurrentPrayerTimes(
-          position.coords.latitude,
-          position.coords.longitude
-        );
-        setPrayerTimes(times);
-        
+        try {
+          // Get user's current position
+          const position = await getCurrentPosition();
+          
+          // Get location name
+          const locationName = await getLocationName(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setLocation(locationName);
+          
+          // Get prayer times
+          const times = await getCurrentPrayerTimes(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setPrayerTimes(times);
+        } catch (geoError) {
+          console.error('Geolocation error:', geoError);
+          
+          // Use default coordinates for New York as fallback
+          const defaultLat = 40.7589;
+          const defaultLng = -73.9851;
+          
+          setLocation("New York (Default)");
+          
+          // Get prayer times for default location
+          const times = await getCurrentPrayerTimes(defaultLat, defaultLng);
+          setPrayerTimes(times);
+        }
       } catch (error) {
         console.error('Error loading prayer times:', error);
         toast({

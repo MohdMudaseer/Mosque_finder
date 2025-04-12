@@ -80,9 +80,14 @@ const FindMosques = () => {
     } catch (error) {
       console.error('Error getting location:', error);
       toast({
-        title: "Location Error",
-        description: "Unable to get your location. Please enter a location manually.",
-        variant: "destructive",
+        title: "Using Default Location",
+        description: "Unable to get your location. Using New York as default location.",
+      });
+      
+      // Use default coordinates for New York as fallback
+      setUserLocation({
+        lat: 40.7589,
+        lng: -73.9851
       });
     }
   };

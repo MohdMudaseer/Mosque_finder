@@ -56,51 +56,62 @@ export interface FallbackPosition {
 // Get user's current position
 export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosition> => {
   return new Promise((resolve) => {
-    // Create a fallback position (New York City)
-    const createFallbackPosition = (): FallbackPosition => {
-      return {
-        coords: {
-          latitude: DEFAULT_LATITUDE,
-          longitude: DEFAULT_LONGITUDE,
-          accuracy: 1000,
-        },
-        timestamp: Date.now(),
-      };
+    let isResolved = false;
+    
+    const createFallbackPosition = (): FallbackPosition => ({
+      coords: {
+        latitude: DEFAULT_LATITUDE,
+        longitude: DEFAULT_LONGITUDE,
+        accuracy: 1000,
+      },
+      timestamp: Date.now(),
+    });
+
+    const resolveSafely = (position: GeolocationPosition | FallbackPosition) => {
+      if (!isResolved) {
+        isResolved = true;
+        resolve(position);
+      }
     };
 
     if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by your browser. Using fallback position.');
-      resolve(createFallbackPosition());
-    } else {
-      // Set a timeout in case geolocation takes too long
-      const timeoutId = setTimeout(() => {
-        console.warn('Geolocation timed out. Using fallback position.');
-        resolve(createFallbackPosition());
-      }, 5000);
+      console.warn('Geolocation is not supported. Using fallback position.');
+      resolveSafely(createFallbackPosition());
+      return;
+    }
 
-      const successCallback = (position: GeolocationPosition) => {
-        clearTimeout(timeoutId);
-        console.log("Position successfully obtained:", position.coords);
-        resolve(position);
-      };
+    const timeoutId = setTimeout(() => {
+      console.warn('Geolocation request timed out. Using fallback position.');
+      resolveSafely(createFallbackPosition());
+    }, 5000);
 
-      const errorCallback = (error: GeolocationPositionError) => {
-        clearTimeout(timeoutId);
-        console.error("Geolocation error:", error.code, error.message);
-        // Use fallback for any error (permission denied, position unavailable, timeout)
-        console.warn('Using fallback position due to geolocation error.');
-        resolve(createFallbackPosition());
-      };
-
+    try {
       navigator.geolocation.getCurrentPosition(
-        successCallback,
-        errorCallback,
+        (position) => {
+          clearTimeout(timeoutId);
+          if (position && position.coords) {
+            console.log("Position obtained:", position.coords);
+            resolveSafely(position);
+          } else {
+            console.warn('Invalid position data. Using fallback.');
+            resolveSafely(createFallbackPosition());
+          }
+        },
+        (error) => {
+          clearTimeout(timeoutId);
+          console.error("Geolocation error:", error.code, error.message);
+          resolveSafely(createFallbackPosition());
+        },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+          enableHighAccuracy: false, // Set to false for faster response
+          timeout: 5000,
+          maximumAge: 60000 // Cache position for 1 minute
         }
       );
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error("Unexpected geolocation error:", error);
+      resolveSafely(createFallbackPosition());
     }
   });
 };

@@ -154,10 +154,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Prayer times already exist for this mosque" });
       }
       
-      const prayerTimeData = insertPrayerTimesSchema.parse({ ...req.body, mosqueId });
-      const newPrayerTimes = await storage.createPrayerTimes(prayerTimeData);
+      const prayerTimeData = {
+        mosqueId,
+        fajr: req.body.fajr,
+        dhuhr: req.body.dhuhr,
+        asr: req.body.asr,
+        maghrib: req.body.maghrib,
+        isha: req.body.isha,
+        jummuah: req.body.jummuah,
+        fajrAzaan: req.body.fajrAzaan,
+        dhuhrAzaan: req.body.dhuhrAzaan,
+        asrAzaan: req.body.asrAzaan,
+        maghribAzaan: req.body.maghribAzaan,
+        ishaAzaan: req.body.ishaAzaan,
+        fajrDays: req.body.fajrDays,
+        dhuhrDays: req.body.dhuhrDays,
+        asrDays: req.body.asrDays,
+        maghribDays: req.body.maghribDays,
+        ishaDays: req.body.ishaDays
+      };
+      
+      const validatedData = insertPrayerTimesSchema.parse(prayerTimeData);
+      const newPrayerTimes = await storage.createPrayerTimes(validatedData);
       res.status(201).json(newPrayerTimes);
     } catch (error) {
+      console.error("Prayer times creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid prayer time data", errors: error.errors });
       }

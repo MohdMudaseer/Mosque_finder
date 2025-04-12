@@ -7,7 +7,7 @@ interface MobileNavProps {
 }
 
 const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
-  const [location] = useLocation();
+  const location = useLocation();
 
   // Close mobile menu when navigating to a new page
   useEffect(() => {

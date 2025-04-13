@@ -137,5 +137,53 @@ export type InsertMosque = z.infer<typeof insertMosqueSchema>;
 export type PrayerTime = typeof prayerTimes.$inferSelect;
 export type InsertPrayerTime = z.infer<typeof insertPrayerTimesSchema>;
 
+// Community schema
+export const communities = pgTable("communities", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull(), // 'REGIONAL' or 'SCHOLARLY'
+  region: text("region"), // For regional communities
+  state: text("state"), // For regional communities
+  district: text("district"), // For regional communities
+  creatorId: integer("creator_id").references(() => users.id).notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCommunitySchema = createInsertSchema(communities).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Community membership schema
+export const communityMembers = pgTable("community_members", {
+  id: serial("id").primaryKey(),
+  communityId: integer("community_id").references(() => communities.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: text("role").notNull().default("member"), // 'admin', 'moderator', 'member'
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+// Community messages schema
+export const communityMessages = pgTable("community_messages", {
+  id: serial("id").primaryKey(),
+  communityId: integer("community_id").references(() => communities.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityRelations = relations(communities, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [communities.creatorId],
+    references: [users.id],
+  }),
+  members: many(communityMembers),
+  messages: many(communityMessages),
+}));
+
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Community = typeof communities.$inferSelect;
+export type InsertCommunity = z.infer<typeof insertCommunitySchema>;

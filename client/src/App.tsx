@@ -27,7 +27,10 @@ function App() {
               <Route path="/login" element={<LoginPage />} /> {/* Added login route */}
               <Route path="/find-mosques" element={<FindMosques />} />
               <Route path="/register-mosque" element={<RegisterMosque />} />
-              <Route path="*" element={<NotFound />} /> {/* Changed to NotFound */}
+              <Route path="/communities" element={<Communities />} />
+              <Route path="/communities/:id" element={<CommunityChat />} />
+              <Route path="/create-community" element={<CreateCommunity />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

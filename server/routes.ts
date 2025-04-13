@@ -299,6 +299,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Community routes
+  app.post("/api/communities", async (req: Request, res: Response) => {
+    try {
+      const communityData = insertCommunitySchema.parse(req.body);
+      const newCommunity = await storage.createCommunity(communityData);
+      res.status(201).json(newCommunity);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create community" });
+    }
+  });
+
+  app.get("/api/communities", async (req: Request, res: Response) => {
+    try {
+      const { type, region, state, district } = req.query;
+      const communities = await storage.getCommunities({ type, region, state, district });
+      res.json(communities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch communities" });
+    }
+  });
+
+  app.post("/api/communities/:id/join", async (req: Request, res: Response) => {
+    try {
+      const communityId = parseInt(req.params.id);
+      const userId = req.body.userId;
+      await storage.joinCommunity(communityId, userId);
+      res.status(200).json({ message: "Joined community successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to join community" });
+    }
+  });
+
+  app.post("/api/communities/:id/messages", async (req: Request, res: Response) => {
+    try {
+      const communityId = parseInt(req.params.id);
+      const { userId, content } = req.body;
+      const message = await storage.createCommunityMessage(communityId, userId, content);
+      res.status(201).json(message);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

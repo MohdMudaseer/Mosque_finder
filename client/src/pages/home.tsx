@@ -105,12 +105,12 @@ const Home = () => {
           </p>
           
           <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
-            <Link href="/find-mosques">
+            <Link to="/find-mosques">
               <Button className="bg-primary hover:bg-primary/90 text-white font-medium py-4 px-8 rounded-lg transition-colors shadow-md w-full md:w-auto text-base">
                 <MapPin className="w-5 h-5 mr-2" />Find Nearby Mosques
               </Button>
             </Link>
-            <Link href="/register-mosque">
+            <Link to="/register-mosque">
               <Button variant="outline" className="bg-white border-primary text-primary hover:bg-primary/5 font-medium py-4 px-8 rounded-lg transition-colors shadow-sm w-full md:w-auto text-base">
                 <Users className="w-5 h-5 mr-2" />Register Your Mosque
               </Button>
@@ -236,7 +236,7 @@ const Home = () => {
           </div>
           
           <div className="text-center mt-12">
-            <Link href="/find-mosques">
+            <Link to="/find-mosques">
               <Button className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-md">
                 Get Started <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -346,12 +346,12 @@ const Home = () => {
             <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6 text-neutral-dark">Ready to Connect with Your Local Muslim Community?</h2>
             <p className="text-lg mb-8 text-neutral-dark/80">Join thousands of Muslims using MosqueTime to find nearby mosques, accurate prayer times, and community events.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/find-mosques">
+              <Link to="/find-mosques">
                 <Button className="bg-primary hover:bg-primary/90 text-white font-medium py-4 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
                   Find Nearby Mosques
                 </Button>
               </Link>
-              <Link href="/register-mosque">
+              <Link to="/register-mosque">
                 <Button variant="outline" className="bg-white border-primary text-primary hover:bg-primary/5 font-medium py-4 px-8 rounded-lg transition-colors shadow-md w-full sm:w-auto">
                   Register Your Mosque
                 </Button>

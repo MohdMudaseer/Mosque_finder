@@ -1,4 +1,3 @@
-
 // Type definition for mosque data
 export interface Mosque {
   id: number;
@@ -55,84 +54,63 @@ export interface FallbackPosition {
 }
 
 // Get user's current position
-export const getCurrentPosition = (): Promise<GeolocationPosition | FallbackPosition> => {
-  return new Promise((resolve) => {
-    let isResolved = false;
-    
-    const createFallbackPosition = (): FallbackPosition => ({
-      coords: {
-        latitude: DEFAULT_LATITUDE,
-        longitude: DEFAULT_LONGITUDE,
-        accuracy: 1000,
-      },
-      timestamp: Date.now(),
-    });
-
-    const resolveSafely = (position: GeolocationPosition | FallbackPosition) => {
-      if (!isResolved) {
-        isResolved = true;
-        resolve(position);
-      }
-    };
-
+export const getCurrentPosition = (): Promise<GeolocationPosition> => {
+  return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported. Using fallback position.');
-      resolveSafely(createFallbackPosition());
+      reject(new Error('Geolocation is not supported by your browser'));
       return;
     }
 
-    const timeoutId = setTimeout(() => {
-      console.warn('Geolocation request timed out. Using fallback position.');
-      resolveSafely(createFallbackPosition());
-    }, 5000);
+    // First try with high accuracy
+    const tryGeolocation = (highAccuracy: boolean) => {
+      const timeoutId = setTimeout(() => {
+        if (highAccuracy) {
+          console.log("Trying with lower accuracy...");
+          tryGeolocation(false);
+        } else {
+          reject(new Error('Location request timed out. Please try again.'));
+        }
+      }, highAccuracy ? 5000 : 10000);
 
-    try {
+      const successHandler = (position: GeolocationPosition) => {
+        clearTimeout(timeoutId);
+        if (position?.coords?.latitude && position?.coords?.longitude) {
+          console.log("Position obtained:", position.coords);
+          resolve(position);
+        } else {
+          reject(new Error('Invalid position data received'));
+        }
+      };
+
       const errorHandler = (error: GeolocationPositionError) => {
         clearTimeout(timeoutId);
+        if (highAccuracy && error.code === error.TIMEOUT) {
+          console.log("High accuracy timeout, trying with lower accuracy...");
+          tryGeolocation(false);
+          return;
+        }
+
         const errorMessages = {
-          1: "Permission denied. Please allow location access in your browser.",
-          2: "Position unavailable. Using default location. Try refreshing the page or check if location is enabled in your browser.",
-          3: "Request timeout. Please try again."
+          1: "Location access denied. Please allow location access in your browser settings and try again.",
+          2: "Unable to determine your location. Please make sure you have GPS enabled and try again.",
+          3: "Location request timed out. Please check your connection and try again."
         };
-        console.warn("Geolocation status:", errorMessages[error.code as 1|2|3]);
-        resolveSafely(createFallbackPosition());
+        reject(new Error(errorMessages[error.code as 1|2|3]));
       };
 
-      // Try high accuracy first, then fall back to low accuracy if needed
-      const tryGeolocation = (highAccuracy: boolean) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            clearTimeout(timeoutId);
-            if (position?.coords?.latitude && position?.coords?.longitude) {
-              console.log("Position obtained:", position.coords);
-              resolveSafely(position);
-            } else {
-              console.warn('Invalid position data. Using fallback.');
-              resolveSafely(createFallbackPosition());
-            }
-          },
-          (error) => {
-            if (highAccuracy && error.code === error.TIMEOUT) {
-              console.log("High accuracy timeout, trying low accuracy...");
-              tryGeolocation(false);
-            } else {
-              errorHandler(error);
-            }
-          },
-          {
-            enableHighAccuracy: highAccuracy,
-            timeout: highAccuracy ? 10000 : 20000,
-            maximumAge: 300000
-          }
-        );
-      };
+      navigator.geolocation.getCurrentPosition(
+        successHandler,
+        errorHandler,
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 5000 : 10000,
+          maximumAge: highAccuracy ? 0 : 60000
+        }
+      );
+    };
 
-      tryGeolocation(true);
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error("Unexpected geolocation error:", error);
-      resolveSafely(createFallbackPosition());
-    }
+    // Start with high accuracy first
+    tryGeolocation(true);
   });
 };
 

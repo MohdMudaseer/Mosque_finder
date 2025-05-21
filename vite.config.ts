@@ -18,6 +18,13 @@ export default defineConfig({
         ]
       : []),
   ],
+  server: {
+    port: 5177, // Use a different port
+    strictPort: true, // Fail if port is already in use
+    hmr: {
+      port: 24679, // Use a different WebSocket port
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

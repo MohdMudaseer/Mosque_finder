@@ -8,8 +8,12 @@ import RegisterMosque from "@/pages/register-mosque";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MobileNav from "@/components/layout/MobileNav";
-import LoginPage from "@/pages/login"; // Added import for login page
-import NotFound from "@/pages/not-found"; // Added import for 404 page
+import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
+import NotFound from "@/pages/not-found";
+import Communities from "@/pages/communities";
+import CommunityChat from "@/pages/community-chat";
+import CreateCommunity from "@/pages/create-community";
 import { useState } from "react";
 
 function App() {
@@ -17,14 +21,15 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter> {/* Added BrowserRouter for react-router-dom */}
+      <BrowserRouter>
         <div className="flex flex-col min-h-screen">
           <Header />
           <MobileNav isOpen={mobileMenuOpen} setIsOpen={setMobileMenuOpen} />
           <main className="flex-grow">
-            <Routes> {/* Changed to Routes */}
+            <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/login" element={<LoginPage />} /> {/* Added login route */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
               <Route path="/find-mosques" element={<FindMosques />} />
               <Route path="/register-mosque" element={<RegisterMosque />} />
               <Route path="/communities" element={<Communities />} />

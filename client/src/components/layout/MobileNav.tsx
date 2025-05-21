@@ -42,7 +42,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                 <li>
                   <Link 
                     to="/"
-                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location === '/' ? 'bg-primary-800' : ''}`}
+                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location.pathname === '/' ? 'bg-primary-800' : ''}`}
                   >
                     <i className="fas fa-home mr-2"></i> Home
                   </Link>
@@ -50,7 +50,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                 <li>
                   <Link 
                     to="/find-mosques"
-                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location === '/find-mosques' ? 'bg-primary-800' : ''}`}
+                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location.pathname === '/find-mosques' ? 'bg-primary-800' : ''}`}
                   >
                     <i className="fas fa-mosque mr-2"></i> Find Mosques
                   </Link>
@@ -58,7 +58,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                 <li>
                   <Link 
                     to="/register-mosque"
-                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location === '/register-mosque' ? 'bg-primary-800' : ''}`}
+                    className={`block py-2 px-4 hover:bg-primary-700 rounded ${location.pathname === '/register-mosque' ? 'bg-primary-800' : ''}`}
                   >
                     <i className="fas fa-user-plus mr-2"></i> Register Mosque
                   </Link>

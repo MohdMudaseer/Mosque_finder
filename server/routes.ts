@@ -1,15 +1,87 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import session from "express-session";
 import { storage } from "./storage";
 import { insertMosqueSchema, insertPrayerTimesSchema, insertEventSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { hashPassword, comparePasswords, validatePassword } from "./utils/auth";
+import { requireAuth, requireAdmin, validateMosqueId } from "./utils/middleware";
+import { generateMosqueId } from "./utils/id-generator";
+
+// Extend express Request type to include session
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+    username: string;
+    role: string;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup session middleware
+  app.use(session({
+    secret: 'your-secret-key', // In production, use a proper secret key from environment variables
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
   // User routes
+  app.post("/api/login", validateMosqueId, async (req: Request, res: Response) => {
+    try {
+      const { email, password, userType } = req.body;
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // For mosque admins, ensure they are associated with the mosque
+      if (userType === 'admin' && req.mosque) {
+        if (user.role !== 'committee' || user.id !== req.mosque.createdBy) {
+          return res.status(403).json({ 
+            message: "You are not authorized to access this mosque's admin panel" 
+          });
+        }
+      }
+
+      // In a real app, you would hash the password and compare with stored hash
+      const isPasswordValid = await comparePasswords(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      
+      // Return user info (excluding password)
+      // Set session data
+      req.session.userId = user.id;
+      req.session.username = user.username;
+      req.session.role = user.role;
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to log in" });
+    }
+  });
+
   app.post("/api/users", async (req: Request, res: Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
+      // Validate password
+      const passwordValidation = validatePassword(userData.password);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation.message });
+      }
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
@@ -21,7 +93,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists" });
       }
       
-      const newUser = await storage.createUser(userData);
+      // Hash password before storing
+      const hashedPassword = await hashPassword(userData.password);
+      
+      // Generate mosque ID if user is admin
+      let userDataWithHash = { ...userData, password: hashedPassword };
+      if (userData.role === 'committee') {
+        const mosqueId = generateMosqueId();
+        userDataWithHash = { ...userDataWithHash, mosqueId };
+      }
+      
+      const newUser = await storage.createUser(userDataWithHash);
+      if (!newUser) {
+        return res.status(500).json({ message: "Failed to create user" });
+      }
       res.status(201).json({ id: newUser.id, username: newUser.username, email: newUser.email });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -75,7 +160,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/mosques", async (req: Request, res: Response) => {
     try {
       const mosqueData = insertMosqueSchema.parse(req.body);
-      const newMosque = await storage.createMosque(mosqueData);
+      
+      // Generate a unique mosque ID
+      const mosqueIdentifier = generateMosqueId();
+      const mosqueWithId = { 
+        ...mosqueData, 
+        mosqueIdentifier, 
+        isVerified: false,
+        verificationStatus: 'pending'
+      };
+      
+      const newMosque = await storage.createMosque(mosqueWithId);
       res.status(201).json(newMosque);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -114,6 +209,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(verifiedMosque);
     } catch (error) {
       res.status(500).json({ message: "Failed to verify mosque" });
+    }
+  });
+
+  // Get pending mosques for verification (admin only)
+  app.get("/api/mosques/pending", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const pendingMosques = await storage.getMosques();
+      // Filter out mosques that are not verified
+      const unverifiedMosques = pendingMosques.filter(mosque => !mosque.isVerified);
+      res.json(unverifiedMosques);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending mosques" });
+    }
+  });
+
+  // Mosque verification endpoint (admin only)
+  app.post("/api/mosques/:id/verify", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const mosqueId = parseInt(req.params.id);
+      const { verified } = req.body;
+      
+      const mosque = await storage.getMosque(mosqueId);
+      if (!mosque) {
+        return res.status(404).json({ message: "Mosque not found" });
+      }
+      
+      const updatedMosque = await storage.updateMosque(mosqueId, {
+        isVerified: verified
+      });
+
+      // If mosque is verified, update the associated user's status
+      if (verified && mosque.createdBy) {
+        await storage.updateUser(mosque.createdBy, {
+          isVerified: true
+        });
+      }
+      
+      res.json(updatedMosque);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update mosque verification status" });
+    }
+  });
+
+  // Get pending mosque verifications (admin only)
+  app.get("/api/mosques/pending", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const pendingMosques = await storage.getMosquesBy({ isVerified: false });
+      res.json(pendingMosques);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending mosques" });
     }
   });
 

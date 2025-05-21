@@ -17,7 +17,7 @@ const Header = () => {
             <li>
               <Link 
                 to="/"
-                className={`hover:text-secondary transition-colors ${location === '/' ? 'text-secondary' : ''}`}
+                className={`hover:text-secondary transition-colors ${location.pathname === '/' ? 'text-secondary' : ''}`}
               >
                 Home
               </Link>
@@ -25,7 +25,7 @@ const Header = () => {
             <li>
               <Link 
                 to="/find-mosques"
-                className={`hover:text-secondary transition-colors ${location === '/find-mosques' ? 'text-secondary' : ''}`}
+                className={`hover:text-secondary transition-colors ${location.pathname === '/find-mosques' ? 'text-secondary' : ''}`}
               >
                 Find Mosques
               </Link>
@@ -33,7 +33,7 @@ const Header = () => {
             <li>
               <Link 
                 to="/register-mosque"
-                className={`hover:text-secondary transition-colors ${location === '/register-mosque' ? 'text-secondary' : ''}`}
+                className={`hover:text-secondary transition-colors ${location.pathname === '/register-mosque' ? 'text-secondary' : ''}`}
               >
                 Register Mosque
               </Link>

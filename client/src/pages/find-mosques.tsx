@@ -13,6 +13,7 @@ const FindMosques = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [searchRadius, setSearchRadius] = useState<number>(5);
   const [filteredMosques, setFilteredMosques] = useState<Mosque[]>([]);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     hasJummuah: false,
     hasWomensSection: false,
@@ -21,13 +22,13 @@ const FindMosques = () => {
   });
 
   // Fetch mosques near the user's location
-  const { data: mosques, isLoading, error, refetch } = useQuery({
-    queryKey: [userLocation ? `/api/mosques?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${searchRadius}` : '/api/mosques'],
+  const { data: mosques = [], isLoading, error, refetch } = useQuery<Mosque[]>({
+    queryKey: [userLocation ? `/api/mosques?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${searchRadius}` : null],
     enabled: !!userLocation,
   });
 
   // Fetch prayer times for all mosques
-  const { data: prayerTimesMap } = useQuery({
+  const { data: prayerTimesMap } = useQuery<Record<number, MosquePrayerTimes>>({
     queryKey: ['/api/prayer-times-map'],
     queryFn: async () => {
       if (!mosques || mosques.length === 0) return {};
@@ -51,7 +52,7 @@ const FindMosques = () => {
       
       return prayerTimesMap;
     },
-    enabled: !!mosques && mosques.length > 0,
+    enabled: mosques.length > 0,
   });
 
   useEffect(() => {
@@ -67,28 +68,73 @@ const FindMosques = () => {
 
   const handleGetLocation = async () => {
     try {
+      if (!navigator.geolocation) {
+        toast({
+          title: "Location Not Supported",
+          description: "Your browser doesn't support geolocation. Please try a different browser.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setIsLoadingLocation(true);
+      setUserLocation(null); // Reset location before trying to get new one
+      
       const position = await getCurrentPosition();
+      if (!position.coords) {
+        throw new Error("Failed to get location coordinates");
+      }
+
+      // Validate coordinates
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+        throw new Error("Invalid coordinates received");
+      }
+
+      // Set precise coordinates
       setUserLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
+        lat: lat,
+        lng: lng
       });
       
       toast({
         title: "Location Found",
         description: "Showing mosques near your current location.",
       });
+
+      // Refetch mosques with new location
+      refetch();
+
     } catch (error) {
       console.error('Error getting location:', error);
-      toast({
-        title: "Using Default Location",
-        description: "Unable to get your location. Using New York as default location.",
-      });
       
-      // Use default coordinates for New York as fallback
-      setUserLocation({
-        lat: 40.7589,
-        lng: -73.9851
+      let errorMessage = "Failed to get your location. ";
+      
+      if (error instanceof GeolocationPositionError) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please enable location access in your browser settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable. Please check your device's GPS settings.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out. Please try again.";
+            break;
+        }
+      } else {
+        errorMessage += error instanceof Error ? error.message : "Unknown error occurred.";
+      }
+
+      toast({
+        title: "Location Error",
+        description: errorMessage,
+        variant: "destructive"
       });
+    } finally {
+      setIsLoadingLocation(false);
     }
   };
 

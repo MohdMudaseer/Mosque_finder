@@ -1,8 +1,7 @@
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { insertMosqueSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,12 +9,26 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { getCurrentPosition, DEFAULT_LATITUDE, DEFAULT_LONGITUDE } from "@/lib/maps";
+import { getCurrentPosition, DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getLocationName } from "@/lib/maps";
 
-const formSchema = insertMosqueSchema.extend({
-  confirmAuthorized: z.boolean().refine(val => val === true, {
-    message: "You must confirm that you are authorized to represent this mosque",
-  }),
+const formSchema = z.object({
+  name: z.string().min(3, { message: "Mosque name must be at least 3 characters" }),
+  address: z.string().min(5, { message: "Address is required" }),
+  city: z.string().min(2, { message: "City is required" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  contactNumber: z.string().optional(),
+  latitude: z.string().min(1, { message: "Latitude is required" }),
+  longitude: z.string().min(1, { message: "Longitude is required" }),
+  imageUrl: z.string().optional(),
+  
+  // Facilities
+  hasWomensSection: z.boolean().default(false),
+  hasAccessibleEntrance: z.boolean().default(false),
+  hasParking: z.boolean().default(false),
+  hasWuduFacilities: z.boolean().default(false),
+  hasQuranClasses: z.boolean().default(false),
+  hasCommunityHall: z.boolean().default(false),
+  
   // For prayer times (Azaan/Adhan times)
   fajrAzaan: z.string().min(1, { message: "Fajr Azaan time is required" }),
   dhuhrAzaan: z.string().min(1, { message: "Dhuhr Azaan time is required" }),
@@ -38,17 +51,20 @@ const formSchema = insertMosqueSchema.extend({
   
   // For image upload
   imageFile: z.instanceof(File).optional(),
+  confirmAuthorized: z.boolean().refine(val => val === true, {
+    message: "You must confirm that you are authorized to represent this mosque",
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-const MosqueRegistrationForm = () => {
+export default function MosqueRegistrationForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,7 +89,6 @@ const MosqueRegistrationForm = () => {
       latitude: "",
       longitude: "",
       imageUrl: "",
-      additionalImages: [],
       hasWomensSection: false,
       hasAccessibleEntrance: false,
       hasParking: false,
@@ -100,78 +115,49 @@ const MosqueRegistrationForm = () => {
     },
   });
 
-  const createMosque = useMutation({
-    mutationFn: async (data: FormData) => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    try {
       setSubmitting(true);
-      
-      // Handle mosque creation
-      const mosqueData = {
-        name: data.name,
-        address: data.address,
-        city: data.city,
-        contactNumber: data.contactNumber,
-        email: data.email,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        imageUrl: data.imageUrl || (imagePreview || ""),
-        additionalImages: data.additionalImages,
-        hasWomensSection: data.hasWomensSection,
-        hasAccessibleEntrance: data.hasAccessibleEntrance,
-        hasParking: data.hasParking,
-        hasWuduFacilities: data.hasWuduFacilities,
-        hasQuranClasses: data.hasQuranClasses,
-        hasCommunityHall: data.hasCommunityHall,
-      };
-      
-      const response = await apiRequest(
-        "POST",
-        "/api/mosques", 
-        mosqueData
-      );
-      
-      // Parse the response to JSON to get the ID
-      const createdMosque = await response.json();
-      
-      // Then create prayer times
-      const prayerTimesData = {
-        mosqueId: createdMosque.id,
-        fajrAzaan: data.fajrAzaan,
-        dhuhrAzaan: data.dhuhrAzaan,
-        asrAzaan: data.asrAzaan,
-        maghribAzaan: data.maghribAzaan,
-        ishaAzaan: data.ishaAzaan,
-        fajr: data.fajr,
-        dhuhr: data.dhuhr,
-        asr: data.asr,
-        maghrib: data.maghrib,
-        isha: data.isha,
-        jummuah: data.jummuah,
-        fajrDays: data.fajrDays,
-        dhuhrDays: data.dhuhrDays,
-        asrDays: data.asrDays,
-        maghribDays: data.maghribDays,
-        ishaDays: data.ishaDays,
-      };
-      
-      await apiRequest(
-        "POST",
-        `/api/mosques/${createdMosque.id}/prayer-times`, 
-        prayerTimesData
-      );
-      
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mosques"] });
-      toast({
-        title: "Mosque Registration Successful",
-        description: "Thank you for registering your mosque. It will be verified soon.",
+      const response = await apiRequest('POST', '/api/mosques', {
+        name: form.getValues("name"),
+        address: form.getValues("address"),
+        city: form.getValues("city"),
+        contactNumber: form.getValues("contactNumber"),
+        email: form.getValues("email"),
+        latitude: form.getValues("latitude"),
+        longitude: form.getValues("longitude"),
+        imageUrl: form.getValues("imageUrl") || (imagePreview || ""),
+        hasWomensSection: form.getValues("hasWomensSection"),
+        hasAccessibleEntrance: form.getValues("hasAccessibleEntrance"),
+        hasParking: form.getValues("hasParking"),
+        hasWuduFacilities: form.getValues("hasWuduFacilities"),
+        hasQuranClasses: form.getValues("hasQuranClasses"),
+        hasCommunityHall: form.getValues("hasCommunityHall"),
       });
+
+      toast({
+        title: "Registration Submitted Successfully",
+        description: (
+          <div className="space-y-2">
+            <p>Thank you for registering your mosque. Please save your Mosque ID:</p>
+            <p className="font-mono bg-primary/10 p-2 rounded text-center text-lg">
+              {response.mosqueIdentifier}
+            </p>
+            <p className="text-sm">
+              Your registration will be reviewed by our team within 24-48 hours. 
+              You will be notified via email when your registration is approved.
+            </p>
+          </div>
+        ),
+        duration: 10000, // Show for 10 seconds
+      });
+
       form.reset();
       setImagePreview(null);
       setSubmitting(false);
-    },
-    onError: (error) => {
+    } catch (error) {
       toast({
         title: "Registration Failed",
         description: "Error registering mosque. Please try again.",
@@ -179,47 +165,48 @@ const MosqueRegistrationForm = () => {
       });
       console.error("Error registering mosque:", error);
       setSubmitting(false);
-    },
-  });
-
-  function onSubmit(data: FormData) {
-    createMosque.mutate(data);
-  }
+    }
+  };
 
   const handleGetCurrentLocation = async () => {
     try {
-      const position = await getCurrentPosition();
-      form.setValue("latitude", position.coords.latitude.toString());
-      form.setValue("longitude", position.coords.longitude.toString());
+      setIsLoadingLocation(true);
       
-      // If we have default/fallback values, let the user know
-      if (position.coords.latitude === DEFAULT_LATITUDE && 
-          position.coords.longitude === DEFAULT_LONGITUDE) {
-        toast({
-          title: "Using Default Location",
-          description: "We're using default coordinates (New York City). You can manually update the coordinates if needed.",
-        });
-      } else {
-        toast({
-          title: "Location Retrieved",
-          description: "We've set your current location coordinates.",
-        });
+      // Check if the browser supports geolocation
+      if (!navigator.geolocation) {
+        throw new Error("Your browser doesn't support geolocation. Please try a different browser.");
       }
+
+      const position = await getCurrentPosition();
+      
+      if (!position.coords) {
+        throw new Error("Unable to get coordinates. Please try again or enter them manually.");
+      }
+      
+      // Set the form values with precise coordinates (6 decimal places for accuracy)
+      form.setValue("latitude", position.coords.latitude.toFixed(6));
+      form.setValue("longitude", position.coords.longitude.toFixed(6));
+      
+      toast({
+        title: "Location Found",
+        description: "Your precise location coordinates have been captured successfully.",
+      });
+      
     } catch (error) {
-      // This should never happen now since we always return a position object
-      // with fallback values, but we'll keep this for extra safety
+      console.error("Error getting location:", error);
       toast({
         title: "Location Error",
-        description: "Could not get your location. Please enter coordinates manually.",
+        description: error instanceof Error ? error.message : "Could not get your location. Please try again or enter coordinates manually.",
         variant: "destructive",
       });
-      console.error("Error getting location:", error);
+    } finally {
+      setIsLoadingLocation(false);
     }
   };
-  
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="mb-6">
           <h3 className="font-heading text-xl font-bold mb-4 border-b border-gray-200 pb-2">Mosque Information</h3>
           
@@ -287,7 +274,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem>
                   <FormLabel>Contact Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter contact number" />
+                    <Input {...field} value={field.value ?? ""} placeholder="Enter contact number" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -334,8 +321,20 @@ const MosqueRegistrationForm = () => {
               type="button" 
               variant="outline" 
               onClick={handleGetCurrentLocation}
+              disabled={isLoadingLocation}
+              className="flex items-center gap-2"
             >
-              <i className="fas fa-location-arrow mr-2"></i> Use Current Location
+              {isLoadingLocation ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  Getting Location...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-location-arrow"></i>
+                  Use Current Location
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -433,7 +432,7 @@ const MosqueRegistrationForm = () => {
                       </FormControl>
                       <select 
                         className="px-3 py-2 border border-gray-300 rounded-lg"
-                        value={form.watch("fajrDays")}
+                        value={form.watch("fajrDays") ?? ""}
                         onChange={(e) => form.setValue("fajrDays", e.target.value)}
                       >
                         <option>Daily</option>
@@ -458,7 +457,7 @@ const MosqueRegistrationForm = () => {
                       </FormControl>
                       <select 
                         className="px-3 py-2 border border-gray-300 rounded-lg"
-                        value={form.watch("dhuhrDays")}
+                        value={form.watch("dhuhrDays") ?? ""}
                         onChange={(e) => form.setValue("dhuhrDays", e.target.value)}
                       >
                         <option>Daily</option>
@@ -483,7 +482,7 @@ const MosqueRegistrationForm = () => {
                       </FormControl>
                       <select 
                         className="px-3 py-2 border border-gray-300 rounded-lg"
-                        value={form.watch("asrDays")}
+                        value={form.watch("asrDays") ?? ""}
                         onChange={(e) => form.setValue("asrDays", e.target.value)}
                       >
                         <option>Daily</option>
@@ -508,7 +507,7 @@ const MosqueRegistrationForm = () => {
                       </FormControl>
                       <select 
                         className="px-3 py-2 border border-gray-300 rounded-lg"
-                        value={form.watch("maghribDays")}
+                        value={form.watch("maghribDays") ?? ""}
                         onChange={(e) => form.setValue("maghribDays", e.target.value)}
                       >
                         <option>Daily</option>
@@ -533,7 +532,7 @@ const MosqueRegistrationForm = () => {
                       </FormControl>
                       <select 
                         className="px-3 py-2 border border-gray-300 rounded-lg"
-                        value={form.watch("ishaDays")}
+                        value={form.watch("ishaDays") ?? ""}
                         onChange={(e) => form.setValue("ishaDays", e.target.value)}
                       >
                         <option>Daily</option>
@@ -576,7 +575,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -592,7 +591,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -608,7 +607,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -624,7 +623,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -640,7 +639,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -656,7 +655,7 @@ const MosqueRegistrationForm = () => {
                 <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox 
-                      checked={field.value} 
+                      checked={field.value ?? false} 
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -752,7 +751,7 @@ const MosqueRegistrationForm = () => {
               <div className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox 
-                    checked={field.value} 
+                    checked={field.value ?? false} 
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -769,10 +768,6 @@ const MosqueRegistrationForm = () => {
           type="submit" 
           className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-md w-full md:w-auto"
           disabled={submitting}
-          onClick={(e) => {
-            e.preventDefault();
-            form.handleSubmit(onSubmit)();
-          }}
         >
           {submitting ? (
             <>
@@ -785,6 +780,4 @@ const MosqueRegistrationForm = () => {
       </form>
     </Form>
   );
-};
-
-export default MosqueRegistrationForm;
+}

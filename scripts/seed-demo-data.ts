@@ -16,11 +16,14 @@ async function seedDemoData() {
         username: "admin",
         password: hashedPassword,
         email: "admin@mosquetime.com",
-        fullName: "Admin User",
-        role: "admin",
+        fullName: "System Administrator",
+        role: "system_admin",
         createdAt: new Date()
       });
-    }    // Create some mosque committee users
+      console.log("Created system admin user with email: admin@mosquetime.com");
+    }
+
+    // Create mosque committee users
     await db.insert(users).values({
       username: "masjid1",
       password: await hashPassword("password123"),
@@ -30,7 +33,7 @@ async function seedDemoData() {
       createdAt: new Date()
     });
     
-    const [committee1] = await db.select().from(users).where(eq(users.email, "committee1@masjid.com")).limit(1);
+    const [committee1] = await db.select().from(users).where(eq(users.email, "committee1@masjid.com"));
 
     await db.insert(users).values({
       username: "masjid2",
@@ -41,7 +44,9 @@ async function seedDemoData() {
       createdAt: new Date()
     });
     
-    const [committee2] = await db.select().from(users).where(eq(users.email, "committee2@masjid.com")).limit(1);    // Create some pending mosques
+    const [committee2] = await db.select().from(users).where(eq(users.email, "committee2@masjid.com"));
+
+    // Create pending mosques
     await db.insert(mosques).values({
       name: "Masjid Al-Rahma",
       address: "123 Islamic Way",
@@ -64,7 +69,7 @@ async function seedDemoData() {
       createdAt: new Date()
     });
     
-    const [mosque1] = await db.select().from(mosques).where(eq(mosques.email, "info@alrahma.org")).limit(1);
+    const [mosque1] = await db.select().from(mosques).where(eq(mosques.email, "info@alrahma.org"));
 
     await db.insert(mosques).values({
       name: "Masjid Al-Noor",
@@ -78,16 +83,17 @@ async function seedDemoData() {
       imageUrl: "https://example.com/mosque2.jpg",
       isVerified: false,
       verificationStatus: "pending",
-      createdBy: committee2[0].id,
+      createdBy: committee2.id,
       hasWomensSection: true,
       hasAccessibleEntrance: false,
-      hasParking: true,      hasWuduFacilities: true,
+      hasParking: true,
+      hasWuduFacilities: true,
       hasQuranClasses: false,
       hasCommunityHall: false,
       createdAt: new Date()
     });
 
-    const [mosque2] = await db.select().from(mosques).where(eq(mosques.email, "info@alnoor.org")).limit(1);
+    const [mosque2] = await db.select().from(mosques).where(eq(mosques.email, "info@alnoor.org"));
 
     // Add prayer times for the mosques
     await db.insert(prayerTimes).values({
@@ -111,7 +117,7 @@ async function seedDemoData() {
     });
 
     await db.insert(prayerTimes).values({
-      mosqueId: mosque2[0].id,
+      mosqueId: mosque2.id,
       fajr: "05:45",
       dhuhr: "13:15",
       asr: "16:45",

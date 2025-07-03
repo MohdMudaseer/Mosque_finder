@@ -61,29 +61,37 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    // Check all password requirements
-    const validations = passwordValidation(formData.password);
-    if (!validations.every(v => v.met)) {
-      toast({
-        title: "Invalid Password",
-        description: "Please meet all password requirements",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
+      // Validate all required fields
+      if (!formData.fullName || !formData.email || !formData.username || !formData.password) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      // Check all password requirements
+      const validations = passwordValidation(formData.password);
+      if (!validations.every(v => v.met)) {
+        throw new Error("Please meet all password requirements");
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      // For admin type, validate mosque details
+      if (userType === 'admin' && !formData.mosqueName) {
+        throw new Error("Mosque name is required for admin registration");
+      }
+
+      // First, create the user account
+      console.log('Creating user account...'); 
       const response = await apiRequest('POST', '/api/users', {
         username: formData.username,
         password: formData.password,
@@ -92,8 +100,11 @@ export default function SignupPage() {
         role: userType === 'admin' ? 'committee' : 'user'
       });
 
+      console.log('User created successfully:', response);
+
       if (userType === 'admin' && formData.mosqueName) {
         // If user is an admin, create the mosque
+        console.log('Creating mosque...'); 
         await apiRequest('POST', '/api/mosques', {
           name: formData.mosqueName,
           address: formData.mosqueAddress || 'To be updated',
@@ -119,9 +130,21 @@ export default function SignupPage() {
 
       navigate('/login');
     } catch (error) {
+      console.error('Signup error:', error);
+      let errorMessage = "Failed to create account. ";
+      
+      if (error instanceof Error) {
+        try {
+          const parsed = JSON.parse(error.message);
+          errorMessage += parsed.message || error.message;
+        } catch {
+          errorMessage += error.message;
+        }
+      }
+
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create account",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

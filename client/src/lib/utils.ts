@@ -12,10 +12,14 @@ export async function apiRequest<T = any>(
   endpoint: string,
   data?: any,
 ): Promise<T> {
+  const baseUrl = 'http://localhost:3001'; // Use port 3001 to match the server
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+  
   const options: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     credentials: 'include',
   };
@@ -24,22 +28,28 @@ export async function apiRequest<T = any>(
     options.body = JSON.stringify(data);
   }
 
-  const response = await fetch(endpoint, options);
-  
-  if (!response.ok) {
-    try {
-      const result = await response.json();
-      throw new Error(result.message || 'API request failed');
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        // If JSON parsing fails, use status text
+  try {
+    console.log(`Making ${method} request to ${url}`, { data }); // Debug log
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      } else {
         throw new Error(response.statusText || 'API request failed');
       }
-      throw e;
     }
-  }
 
-  // For successful responses, handle empty responses gracefully
-  const text = await response.text();
-  return text ? JSON.parse(text) : {};
+    // For successful responses, handle empty responses gracefully
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+    return JSON.parse(text) as T;
+  } catch (error) {
+    console.error('API Request failed:', error);
+    throw error;
+  }
 }

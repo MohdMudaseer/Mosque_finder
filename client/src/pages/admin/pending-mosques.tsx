@@ -14,24 +14,32 @@ export default function PendingMosques() {
   const { data: pendingMosques = [], isLoading } = useQuery<Mosque[]>({
     queryKey: ['/api/mosques/pending'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/mosques/pending');
-      return response;
+      console.log('Fetching pending mosques...');
+      try {
+        const response = await apiRequest('GET', '/api/mosques/pending');
+        console.log('Pending mosques response:', response);
+        return response;
+      } catch (error: unknown) {
+        console.error('Error fetching pending mosques:', error);
+        throw error;
+      }
     }
   });
 
+  console.log('Rendered PendingMosques, count:', pendingMosques.length);
+
   const verifyMosque = useMutation({
-    mutationFn: async ({ mosqueId, verified }: { mosqueId: number; verified: boolean }) => {
-      return await apiRequest('POST', `/api/mosques/${mosqueId}/verify`, { verified });
-    },
+    mutationFn: async (mosqueId: number) => 
+      await apiRequest('POST', `/api/mosques/${mosqueId}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/mosques/pending'] });
       toast({
         title: "Success",
-        description: "Mosque verification status updated successfully.",
+        description: "Mosque verified successfully."
       });
       setSelectedMosque(null);
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update verification status",
@@ -60,21 +68,20 @@ export default function PendingMosques() {
                 <div>
                   <h3 className="font-bold text-lg">{mosque.name}</h3>
                   <p className="text-sm text-gray-600">{mosque.address}, {mosque.city}</p>
-                  <p className="text-sm text-gray-600">Mosque ID: {mosque.mosqueIdentifier}</p>
                   <p className="text-sm text-gray-600">Contact: {mosque.contactNumber}</p>
                   <p className="text-sm text-gray-600">Email: {mosque.email}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button 
                     variant="default"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => verifyMosque.mutate({ mosqueId: mosque.id, verified: true })}
+                    className="bg-green-600 hover:bg-green-700"                    
+                    onClick={() => verifyMosque.mutate(mosque.id)}
                   >
-                    Approve
+                    Verify
                   </Button>
                   <Button 
                     variant="destructive"
-                    onClick={() => verifyMosque.mutate({ mosqueId: mosque.id, verified: false })}
+                    onClick={() => setSelectedMosque(mosque)}
                   >
                     Reject
                   </Button>

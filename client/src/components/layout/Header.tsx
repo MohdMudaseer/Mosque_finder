@@ -1,7 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/utils";
 
 const Header = () => {
   const location = useLocation();
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/me');
+        return response;
+      } catch (error) {
+        return null;
+      }
+    }
+  });
+
+  const isAdmin = user?.role === 'committee';
 
   return (
     <header className="bg-primary text-white shadow-md hidden md:block">
@@ -38,12 +53,22 @@ const Header = () => {
                 Register Mosque
               </Link>
             </li>
+            {isAdmin && (
+              <li>
+                <Link 
+                  to="/admin/pending-mosques"
+                  className={`hover:text-secondary transition-colors ${location.pathname === '/admin/pending-mosques' ? 'text-secondary' : ''}`}
+                >
+                  Pending Mosques
+                </Link>
+              </li>
+            )}
             <li>
               <Link 
                 to="/login"
                 className="hover:text-secondary transition-colors"
               >
-                Login
+                {user ? 'Logout' : 'Login'}
               </Link>
             </li>
           </ul>
@@ -51,6 +76,6 @@ const Header = () => {
       </div>
     </header>
   );
-};
+}
 
 export default Header;

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 import Home from "@/pages/home";
 import FindMosques from "@/pages/find-mosques";
 import RegisterMosque from "@/pages/register-mosque";
@@ -14,6 +15,7 @@ import NotFound from "@/pages/not-found";
 import Communities from "@/pages/communities";
 import CommunityChat from "@/pages/community-chat";
 import CreateCommunity from "@/pages/create-community";
+import PendingMosques from "@/pages/admin/pending-mosques";
 import { useState } from "react";
 
 function App() {
@@ -35,6 +37,11 @@ function App() {
               <Route path="/communities" element={<Communities />} />
               <Route path="/communities/:id" element={<CommunityChat />} />
               <Route path="/create-community" element={<CreateCommunity />} />
+              <Route path="/admin/pending-mosques" element={
+                <RequireAdmin>
+                  <PendingMosques />
+                </RequireAdmin>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

@@ -2,7 +2,7 @@ import {
   users, mosques, prayerTimes, events,
   type User, type Mosque, type PrayerTime, type Event,
   type InsertUser, type InsertMosque, type InsertPrayerTime, type InsertEvent
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 
@@ -96,6 +96,7 @@ export class DatabaseStorage implements IStorage {
     await db.insert(mosques).values({
       ...insertMosque,
       isVerified: false,
+      verificationStatus: 'pending',
       additionalImages: null,
       createdAt: new Date()
     });
@@ -122,11 +123,11 @@ export class DatabaseStorage implements IStorage {
     return updatedMosque;
   }
 
-  async verifyMosque(id: number, verified: boolean): Promise<Mosque | undefined> {
+  async verifyMosque(id: number): Promise<Mosque | undefined> {
     await db.update(mosques)
       .set({ 
-        isVerified: verified,
-        verificationStatus: verified ? 'approved' : 'rejected'
+        isVerified: true,
+        verificationStatus: 'approved'
       })
       .where(eq(mosques.id, id));
     
@@ -146,7 +147,6 @@ export class DatabaseStorage implements IStorage {
   async createPrayerTimes(insertPrayerTime: InsertPrayerTime): Promise<PrayerTime> {
     await db.insert(prayerTimes).values({
       ...insertPrayerTime,
-      updatedAt: new Date()
     });
     
     // Get the most recently inserted prayer times

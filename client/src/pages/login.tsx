@@ -77,14 +77,23 @@ export default function LoginPage() {
       let errorMessage = "Failed to log in. ";
       
       if (error instanceof Error) {
-        const data = JSON.parse(error.message);
-        if (data.message.includes("Mosque not found") || 
-            data.message.includes("mosque ID") ||
-            data.message.includes("pending verification")) {
-          setMosqueIdError(data.message);
-        } else {
-          errorMessage += data.message || "Please check your credentials and try again.";
+        try {
+          const data = JSON.parse(error.message);
+          if (data.message) {
+            if (data.message.includes("Mosque not found") || 
+                data.message.includes("mosque ID") ||
+                data.message.includes("pending verification")) {
+              setMosqueIdError(data.message);
+            } else {
+              errorMessage += data.message;
+            }
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, use the error message as is
+          errorMessage += error.message;
         }
+      } else {
+        errorMessage += "Please check your credentials and try again.";
       }
 
       toast({

@@ -74,22 +74,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req: Request, res: Response) => {
     try {
+      console.log('Received user registration request:', req.body);
+      
       const userData = insertUserSchema.parse(req.body);
       
       // Validate password
       const passwordValidation = validatePassword(userData.password);
       if (!passwordValidation.isValid) {
+        console.log('Password validation failed:', passwordValidation.message);
         return res.status(400).json({ message: passwordValidation.message });
       }
 
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
+        console.log('Username already exists:', userData.username);
         return res.status(400).json({ message: "Username already exists" });
       }
       
       const existingEmail = await storage.getUserByEmail(userData.email);
       if (existingEmail) {
+        console.log('Email already exists:', userData.email);
         return res.status(400).json({ message: "Email already exists" });
       }
       
@@ -196,29 +201,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/mosques/:id/verify", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      const mosque = await storage.getMosque(id);
-      
-      if (!mosque) {
-        return res.status(404).json({ message: "Mosque not found" });
-      }
-      
-      const verifiedMosque = await storage.verifyMosque(id);
-      res.json(verifiedMosque);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to verify mosque" });
-    }
-  });
-
   // Get pending mosques for verification (admin only)
   app.get("/api/mosques/pending", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const pendingMosques = await storage.getMosques();
-      // Filter out mosques that are not verified
-      const unverifiedMosques = pendingMosques.filter(mosque => !mosque.isVerified);
-      res.json(unverifiedMosques);
+      const pendingMosques = await storage.getPendingMosques();
+      res.json(pendingMosques);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch pending mosques" });
     }
@@ -228,39 +215,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/mosques/:id/verify", requireAdmin, async (req: Request, res: Response) => {
     try {
       const mosqueId = parseInt(req.params.id);
-      const { verified } = req.body;
       
       const mosque = await storage.getMosque(mosqueId);
       if (!mosque) {
         return res.status(404).json({ message: "Mosque not found" });
       }
       
-      const updatedMosque = await storage.updateMosque(mosqueId, {
-        isVerified: verified
-      });
+      const verifiedMosque = await storage.verifyMosque(mosqueId);
 
-      // If mosque is verified, update the associated user's status
-      if (verified && mosque.createdBy) {
+      // Update the associated user's status
+      if (mosque.createdBy) {
         await storage.updateUser(mosque.createdBy, {
           isVerified: true
         });
       }
       
-      res.json(updatedMosque);
+      res.json(verifiedMosque);
     } catch (error) {
       res.status(500).json({ message: "Failed to update mosque verification status" });
     }
   });
 
-  // Get pending mosque verifications (admin only)
-  app.get("/api/mosques/pending", requireAdmin, async (req: Request, res: Response) => {
-    try {
-      const pendingMosques = await storage.getMosquesBy({ isVerified: false });
-      res.json(pendingMosques);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch pending mosques" });
-    }
-  });
+
 
   // Prayer Times routes
   app.get("/api/mosques/:id/prayer-times", async (req: Request, res: Response) => {

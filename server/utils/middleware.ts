@@ -29,11 +29,11 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 export async function validateMosqueId(req: Request, res: Response, next: NextFunction) {
   const mosqueId = req.body.mosqueId;
-  
-  // Check if mosque ID is required based on user type
-  if (req.body.userType === 'admin' && !mosqueId) {
-    return res.status(400).json({ 
-      message: "Mosque ID is required for mosque administrators" 
+
+  // Only require mosque ID for mosque admin (committee)
+  if (req.body.userType === 'committee' && !mosqueId) {
+    return res.status(400).json({
+      message: "Mosque ID is required for mosque administrators"
     });
   }
 

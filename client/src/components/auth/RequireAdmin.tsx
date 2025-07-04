@@ -25,7 +25,7 @@ export default function RequireAdmin({ children }: RequireAdminProps) {
   });
 
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'committee')) {
+    if (!isLoading && (!user || (user.role !== 'admin' && user.role !== 'committee'))) {
       toast({
         title: "Access Denied",
         description: "You must be logged in as an admin to view this page.",
@@ -46,7 +46,7 @@ export default function RequireAdmin({ children }: RequireAdminProps) {
     );
   }
 
-  if (!user || user.role !== 'committee') {
+  if (!user || (user.role !== 'admin' && user.role !== 'committee')) {
     return null;
   }
 

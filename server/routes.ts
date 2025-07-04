@@ -1,3 +1,6 @@
+// Authenticated user info route (for frontend session checks)
+// This must be inside the exported registerRoutes function, after app is defined
+
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
@@ -7,6 +10,7 @@ import { z } from "zod";
 import { hashPassword, comparePasswords, validatePassword } from "./utils/auth";
 import { requireAuth, requireAdmin, validateMosqueId } from "./utils/middleware";
 import { generateMosqueId } from "./utils/id-generator";
+import { sendEmail } from "./utils/email";
 
 // Extend express Request type to include session
 declare module 'express-session' {
@@ -18,6 +22,57 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Get pending mosque admins for verification (admin only)
+  app.get("/api/admin/pending-mosque-admins", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      // Fetch users with role 'committee' and isVerified: false
+      const pendingAdmins = await storage.getPendingMosqueAdmins();
+      res.json(pendingAdmins);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending mosque admins" });
+    }
+  });
+
+  // Verify mosque admin (admin only)
+  app.post("/api/admin/verify-mosque-admin/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      // Generate a unique mosque ID
+      const mosqueId = generateMosqueId();
+      // Set isVerified: true and mosqueId for the user
+      const updatedUser = await storage.updateUser(userId, { isVerified: true, mosqueId });
+
+      // Send mosque ID to the admin's email
+      if (updatedUser?.email) {
+        await sendEmail(
+          updatedUser.email,
+          'Your MosqueTime Admin Account is Verified',
+          `Congratulations! Your account has been verified.\n\nYour Mosque ID: ${mosqueId}\n\nYou can now log in using your email, password, and this Mosque ID to register your mosque.`
+        );
+      }
+
+      res.json({ ...updatedUser, mosqueId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to verify mosque admin" });
+    }
+  });
+  // Authenticated user info route (for frontend session checks)
+  app.get("/api/me", async (req: Request, res: Response) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Exclude sensitive fields like password
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch user info" });
+    }
+  });
   // Setup session middleware
   app.use(session({
     secret: 'your-secret-key', // In production, use a proper secret key from environment variables
@@ -461,6 +516,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Failed to send message" });
     }
+  });
+
+  // Admin routes
+  app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const [
+        pendingMosques,
+        totalMosques,
+        totalUsers
+      ] = await Promise.all([
+        storage.countPendingMosques(),
+        storage.countTotalMosques(),
+        storage.countTotalUsers()
+      ]);
+
+      res.json({
+        pendingMosques,
+        totalMosques,
+        totalUsers
+      });
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ message: "Error fetching admin stats" });
+    }
+  });
+
+  app.post("/api/logout", (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.clearCookie("connect.sid"); // default session cookie name
+      res.json({ message: "Logged out successfully" });
+    });
   });
 
   const httpServer = createServer(app);

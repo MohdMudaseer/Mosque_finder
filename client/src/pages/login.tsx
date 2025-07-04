@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState, FormEvent } from "react";
+import { queryClient } from "@/lib/queryClient";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function LoginPage() {
-  const [userType, setUserType] = useState<'user' | 'admin'>('user');
+  // userType: 'user' | 'committee' | 'admin'
+  const [userType, setUserType] = useState<'user' | 'committee' | 'admin'>('user');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -34,53 +36,61 @@ export default function LoginPage() {
   };
 
   const validateMosqueId = (mosqueId: string): boolean => {
-    if (!mosqueId && userType === 'admin') {
-      setMosqueIdError("Mosque ID is required for mosque administrators");
-      return false;
+    if (userType === 'committee') {
+      if (!mosqueId) {
+        setMosqueIdError("Mosque ID is required for mosque administrators");
+        return false;
+      }
+      const mosqueIdPattern = /^MSQ\d{9}$/;
+      if (!mosqueIdPattern.test(mosqueId)) {
+        setMosqueIdError("Invalid mosque ID format. The ID should start with 'MSQ' followed by 9 digits");
+        return false;
+      }
     }
-
-    const mosqueIdPattern = /^MSQ\d{9}$/;
-    if (mosqueId && !mosqueIdPattern.test(mosqueId)) {
-      setMosqueIdError("Invalid mosque ID format. The ID should start with 'MSQ' followed by 9 digits");
-      return false;
-    }
-
     setMosqueIdError(null);
     return true;
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    // Validate mosque ID before submitting
-    if (userType === 'admin' && !validateMosqueId(formData.mosqueId)) {
+
+    // Only validate mosque ID for mosque admin (committee)
+    if (userType === 'committee' && !validateMosqueId(formData.mosqueId)) {
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const response = await apiRequest('POST', '/api/login', {
+      // Prepare payload: only send mosqueId for committee
+      const payload: any = {
         email: formData.email,
         password: formData.password,
-        mosqueId: userType === 'admin' ? formData.mosqueId : undefined,
         userType
-      });
+      };
+      if (userType === 'committee') {
+        payload.mosqueId = formData.mosqueId;
+      }
+
+      await apiRequest('POST', '/api/login', payload);
+
+      // Refetch user data so header updates immediately
+      await queryClient.invalidateQueries(['user']);
 
       toast({
         title: "Success",
         description: "Logged in successfully!"
       });
 
-      // Redirect based on user type
-      navigate(userType === 'admin' ? '/admin/dashboard' : '/');
+      // Redirect: all users (including system admin) go to homepage after login
+      navigate('/');
     } catch (error) {
       let errorMessage = "Failed to log in. ";
-      
+
       if (error instanceof Error) {
         try {
           const data = JSON.parse(error.message);
           if (data.message) {
-            if (data.message.includes("Mosque not found") || 
+            if (data.message.includes("Mosque not found") ||
                 data.message.includes("mosque ID") ||
                 data.message.includes("pending verification")) {
               setMosqueIdError(data.message);
@@ -126,11 +136,18 @@ export default function LoginPage() {
             User
           </Button>
           <Button 
+            variant={userType === 'committee' ? 'default' : 'ghost'}
+            className="flex-1"
+            onClick={() => setUserType('committee')}
+          >
+            Mosque Admin
+          </Button>
+          <Button 
             variant={userType === 'admin' ? 'default' : 'ghost'}
             className="flex-1"
             onClick={() => setUserType('admin')}
           >
-            Mosque Admin
+            System Admin
           </Button>
         </div>
 
@@ -159,7 +176,7 @@ export default function LoginPage() {
               required
             />
           </div>
-          {userType === 'admin' && (
+          {userType === 'committee' && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Mosque ID</label>
               <Input 
@@ -170,7 +187,7 @@ export default function LoginPage() {
                 value={formData.mosqueId}
                 onChange={handleChange}
                 onBlur={() => validateMosqueId(formData.mosqueId)}
-                required={userType === 'admin'}
+                required={userType === 'committee'}
               />
               {mosqueIdError && (
                 <p className="text-xs text-red-500">{mosqueIdError}</p>

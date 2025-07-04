@@ -16,6 +16,7 @@ import Communities from "@/pages/communities";
 import CommunityChat from "@/pages/community-chat";
 import CreateCommunity from "@/pages/create-community";
 import PendingMosques from "@/pages/admin/pending-mosques";
+import AdminDashboard from "@/pages/admin/dashboard";
 import { useState } from "react";
 
 function App() {
@@ -37,6 +38,16 @@ function App() {
               <Route path="/communities" element={<Communities />} />
               <Route path="/communities/:id" element={<CommunityChat />} />
               <Route path="/create-community" element={<CreateCommunity />} />
+              <Route path="/admin" element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              } />
+              <Route path="/admin/dashboard" element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              } />
               <Route path="/admin/pending-mosques" element={
                 <RequireAdmin>
                   <PendingMosques />

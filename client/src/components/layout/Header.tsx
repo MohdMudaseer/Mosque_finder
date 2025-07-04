@@ -16,19 +16,29 @@ const Header = () => {
     }
   });
 
-  const isAdmin = user?.role === 'committee';
+  const isMosqueAdmin = user?.role === 'committee';
+  const isSystemAdmin = user?.role === 'admin';
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/logout');
+      window.location.href = '/login';
+    } catch (err) {
+      alert('Logout failed.');
+    }
+  };
 
   return (
     <header className="bg-primary text-white shadow-md hidden md:block">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
-            <div className="bg-primary/10 p-2 rounded-full mr-2">
-              <i className="fas fa-mosque text-white text-2xl"></i>
-            </div>
-            <h1 className="font-heading text-2xl font-bold">MosqueTime</h1>
+          <div className="bg-primary/10 p-2 rounded-full mr-2">
+            <i className="fas fa-mosque text-white text-2xl"></i>
+          </div>
+          <h1 className="font-heading text-2xl font-bold">MosqueTime</h1>
         </Link>
         <nav>
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-6 items-center">
             <li>
               <Link 
                 to="/"
@@ -53,7 +63,17 @@ const Header = () => {
                 Register Mosque
               </Link>
             </li>
-            {isAdmin && (
+            {isSystemAdmin && (
+              <li>
+                <Link
+                  to="/admin/dashboard"
+                  className={`hover:text-secondary transition-colors ${location.pathname === '/admin/dashboard' ? 'text-secondary' : ''}`}
+                >
+                  System Admin
+                </Link>
+              </li>
+            )}
+            {isMosqueAdmin && (
               <li>
                 <Link 
                   to="/admin/pending-mosques"
@@ -64,16 +84,22 @@ const Header = () => {
               </li>
             )}
             <li>
-              <Link 
-                to="/login"
-                className="hover:text-secondary transition-colors"
-              >
-                {user ? 'Logout' : 'Login'}
-              </Link>
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="hover:text-secondary transition-colors bg-transparent border-none cursor-pointer"
+                  style={{ background: 'none', border: 'none', padding: 0 }}
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link to="/login" className="hover:text-secondary transition-colors">Login</Link>
+              )}
             </li>
           </ul>
         </nav>
       </div>
+      {/* No email/role or extra message in header as per user request */}
     </header>
   );
 }

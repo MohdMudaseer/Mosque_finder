@@ -23,6 +23,9 @@ export default defineConfig({
     strictPort: true, // Fail if port is already in use
     hmr: {
       port: 24679, // Use a different WebSocket port
+    },
+    proxy: {
+      '/api': 'http://localhost:3001'
     }
   },
   resolve: {

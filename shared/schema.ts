@@ -1,3 +1,4 @@
+
 import {
   mysqlTable,
   varchar,
@@ -10,7 +11,9 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+
 // ─── Users ────────────────────────────────────────────
+// Define users table first, without references to mosques
 export const users = mysqlTable("users", {
   id: bigint("id", { mode: "number", unsigned: true }).primaryKey().autoincrement(),
   username: varchar("username", { length: 255 }).notNull().unique(),
@@ -18,27 +21,13 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   role: varchar("role", { length: 50 }).notNull().default("committee"),
-  mosqueId: varchar("mosque_id", { length: 50 }),
+  mosqueId: bigint("mosque_id", { mode: "number", unsigned: true, /* nullable: true */ }), // nullable, only for admins
   isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  email: true,
-  fullName: true,
-  role: true,
-});
-
-export const usersRelations = relations(users, ({ many }) => ({
-  mosques: many(mosques),
-}));
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
 // ─── Mosques ───────────────────────────────────────────
+// Now define mosques table, referencing users
 export const mosques = mysqlTable("mosques", {
   id: bigint("id", { mode: "number", unsigned: true }).primaryKey().autoincrement(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -53,7 +42,7 @@ export const mosques = mysqlTable("mosques", {
   additionalImages: varchar("additional_images", { length: 255 }),
   isVerified: boolean("is_verified").default(false),
   verificationStatus: varchar("verification_status", { length: 20 }).default("pending"),
-  createdBy: bigint("created_by", { mode: "number", unsigned: true }).references(() => users.id),
+  createdBy: bigint("created_by", { mode: "number", unsigned: true }), // FK to users.id
   hasWomensSection: boolean("has_womens_section").default(false),
   hasAccessibleEntrance: boolean("has_accessible_entrance").default(false),
   hasParking: boolean("has_parking").default(false),
@@ -63,17 +52,42 @@ export const mosques = mysqlTable("mosques", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertMosqueSchema = createInsertSchema(mosques).omit(["id", "isVerified", "createdAt"]);
+// Add comments to clarify foreign key relationships
+// users.mosqueId references mosques.id (nullable, only for admins)
+// mosques.createdBy references users.id
+
+// Drizzle does not require explicit .references() for all relationships, but you can add them in migrations or with relations()
+
+// Zod schemas
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  email: true,
+  fullName: true,
+  role: true,
+  mosqueId: true,
+});
+
+export const insertMosqueSchema = createInsertSchema(mosques).omit({ id: true, isVerified: true, createdAt: true });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  mosques: many(mosques),
+}));
 
 export const mosquesRelations = relations(mosques, ({ one, many }) => ({
   creator: one(users, {
     fields: [mosques.createdBy],
     references: [users.id],
   }),
-  prayerTimes: many(prayerTimes),
-  events: many(events),
+  // prayerTimes: many(prayerTimes),
+  // events: many(events),
 }));
 
+
+// Types (only once, after all definitions)
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Mosque = typeof mosques.$inferSelect;
 export type InsertMosque = z.infer<typeof insertMosqueSchema>;
 
@@ -100,7 +114,7 @@ export const prayerTimes = mysqlTable("prayer_times", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertPrayerTimesSchema = createInsertSchema(prayerTimes).omit(["id", "updatedAt"]);
+export const insertPrayerTimesSchema = createInsertSchema(prayerTimes).omit({ id: true, updatedAt: true });
 
 export const prayerTimesRelations = relations(prayerTimes, ({ one }) => ({
   mosque: one(mosques, {
@@ -124,7 +138,7 @@ export const events = mysqlTable("events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertEventSchema = createInsertSchema(events).omit(["id", "createdAt"]);
+export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 
 export const eventsRelations = relations(events, ({ one }) => ({
   mosque: one(mosques, {

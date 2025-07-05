@@ -11,6 +11,7 @@ import { hashPassword, comparePasswords, validatePassword } from "./utils/auth";
 import { requireAuth, requireAdmin, validateMosqueId } from "./utils/middleware";
 import { generateMosqueId } from "./utils/id-generator";
 import { sendEmail } from "./utils/email";
+import otpRoutes from "./routes/otp";
 
 // Extend express Request type to include session
 declare module 'express-session' {
@@ -22,6 +23,8 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // OTP routes
+  app.use("/api/otp", otpRoutes);
   // Get pending mosque admins for verification (admin only)
   app.get("/api/admin/pending-mosque-admins", requireAdmin, async (req: Request, res: Response) => {
     try {
@@ -523,16 +526,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const [
         pendingMosques,
+        pendingMosqueAdmins,
         totalMosques,
         totalUsers
       ] = await Promise.all([
         storage.countPendingMosques(),
+        storage.countPendingMosqueAdmins(),
         storage.countTotalMosques(),
         storage.countTotalUsers()
       ]);
 
       res.json({
         pendingMosques,
+        pendingMosqueAdmins,
         totalMosques,
         totalUsers
       });

@@ -2,11 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState, FormEvent } from "react";
+import OTPVerification from "./OTPVerification";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/utils";
 
 export default function SignupPage() {
+  // OTP state
+  const [showOTP, setShowOTP] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
   const [userType, setUserType] = useState<'user' | 'admin'>('user');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -90,45 +94,11 @@ export default function SignupPage() {
         throw new Error("Mosque name is required for admin registration");
       }
 
-      // First, create the user account
-      console.log('Creating user account...'); 
-      const response = await apiRequest('POST', '/api/users', {
-        username: formData.username,
-        password: formData.password,
-        email: formData.email,
-        fullName: formData.fullName,
-        role: userType === 'admin' ? 'committee' : 'user'
-      });
-
-      console.log('User created successfully:', response);
-
-      if (userType === 'admin' && formData.mosqueName) {
-        // If user is an admin, create the mosque
-        console.log('Creating mosque...'); 
-        await apiRequest('POST', '/api/mosques', {
-          name: formData.mosqueName,
-          address: formData.mosqueAddress || 'To be updated',
-          city: formData.mosqueCity || 'To be updated',
-          contactNumber: formData.mosqueContactNumber,
-          email: formData.email,
-          createdBy: response.id,
-          latitude: '0',
-          longitude: '0',
-          imageUrl: '/default-mosque.jpg'
-        });
-
-        toast({
-          title: "Success",
-          description: "Account created! Your mosque registration is pending verification."
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Account created successfully!"
-        });
-      }
-
-      navigate('/login');
+      // Request OTP for email
+      await apiRequest('POST', '/api/otp/request-otp', { email: formData.email });
+      setPendingEmail(formData.email);
+      setShowOTP(true);
+      // User creation and mosque creation will be done after OTP verification
     } catch (error) {
       console.error('Signup error:', error);
       let errorMessage = "Failed to create account. ";
@@ -154,6 +124,59 @@ export default function SignupPage() {
 
   const currentPasswordValidation = passwordValidation(formData.password);
   const showPasswordValidation = touched.password && formData.password.length > 0;
+
+  if (showOTP && pendingEmail) {
+    return <OTPVerification email={pendingEmail} onVerified={async () => {
+      // After OTP is verified, create user and mosque
+      try {
+        const response = await apiRequest('POST', '/api/users', {
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          fullName: formData.fullName,
+          role: userType === 'admin' ? 'committee' : 'user'
+        });
+        if (userType === 'admin' && formData.mosqueName) {
+          await apiRequest('POST', '/api/mosques', {
+            name: formData.mosqueName,
+            address: formData.mosqueAddress || 'To be updated',
+            city: formData.mosqueCity || 'To be updated',
+            contactNumber: formData.mosqueContactNumber,
+            email: formData.email,
+            createdBy: response.id,
+            latitude: '0',
+            longitude: '0',
+            imageUrl: '/default-mosque.jpg'
+          });
+          toast({
+            title: "Success",
+            description: "Account created! Your mosque registration is pending verification."
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Account created successfully!"
+          });
+        }
+        navigate('/login');
+      } catch (error) {
+        let errorMessage = "Failed to create account. ";
+        if (error instanceof Error) {
+          try {
+            const parsed = JSON.parse(error.message);
+            errorMessage += parsed.message || error.message;
+          } catch {
+            errorMessage += error.message;
+          }
+        }
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+    }} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
@@ -198,15 +221,47 @@ export default function SignupPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Email</label>
-            <Input 
-              name="email"
-              type="email" 
-              placeholder="Enter your email" 
-              className="w-full"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Input 
+                  name="email"
+                  type="email" 
+                  placeholder="Enter your email" 
+                  className="w-full"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={showOTP}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 px-4 border-primary text-primary hover:bg-primary/10 hover:text-primary focus-visible:ring-primary"
+                disabled={!formData.email || showOTP}
+                onClick={async () => {
+                  try {
+                    await apiRequest('POST', '/api/otp/request-otp', { email: formData.email });
+                    setPendingEmail(formData.email);
+                    setShowOTP(true);
+                    toast({ title: "OTP Sent", description: "A verification code has been sent to your email." });
+                  } catch (error) {
+                    let errorMessage = "Failed to send OTP. ";
+                    if (error instanceof Error) {
+                      try {
+                        const parsed = JSON.parse(error.message);
+                        errorMessage += parsed.error || error.message;
+                      } catch {
+                        errorMessage += error.message;
+                      }
+                    }
+                    toast({ title: "Error", description: errorMessage, variant: "destructive" });
+                  }
+                }}
+              >
+                Verify
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Username</label>

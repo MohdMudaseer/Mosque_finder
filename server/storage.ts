@@ -89,9 +89,12 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
+      // Always enforce isVerified: false for mosque admins (role: 'committee')
+      const role = insertUser.role || "committee";
       const data = {
         ...insertUser,
-        role: insertUser.role || "committee",
+        role,
+        ...(role === "committee" ? { isVerified: false } : {}),
         createdAt: new Date()
       };
       await db.insert(users).values(data);

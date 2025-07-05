@@ -12,8 +12,10 @@ export function Footer() {
           {/* Logo and About */}
           <div className="md:col-span-1">
             <div className="flex items-center mb-6">
-              <div className="mosque-dome"></div>
-              <div className="ml-3">
+              <div className="bg-primary/10 p-2 rounded-full mr-2">
+                <i className="fas fa-mosque text-primary text-2xl"></i>
+              </div>
+              <div className="ml-1">
                 <span className="font-heading text-2xl font-bold text-primary block">MosqueTime</span>
                 <span className="text-sm text-muted-foreground">Prayer Times & More</span>
               </div>

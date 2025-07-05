@@ -12,10 +12,22 @@ export async function sendEmail(to: string, subject: string, text: string) {
     },
   });
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@mosquetime.com',
-    to,
-    subject,
-    text,
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || 'noreply@mosquetime.com',
+      to,
+      subject,
+      text,
+    });
+  } catch (err) {
+    console.error('Failed to send email:', err);
+    throw new Error('Failed to send email. ' + (err instanceof Error ? err.message : ''));
+  }
+}
+
+// Send verification OTP email
+export async function sendVerificationEmail(to: string, otp: string) {
+  const subject = 'Your Verification Code';
+  const text = `Your verification code is: ${otp}\nThis code will expire in 1 minute.`;
+  await sendEmail(to, subject, text);
 }

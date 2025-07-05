@@ -16,6 +16,7 @@ import Communities from "@/pages/communities";
 import CommunityChat from "@/pages/community-chat";
 import CreateCommunity from "@/pages/create-community";
 import PendingMosques from "@/pages/admin/pending-mosques";
+import PendingMosqueAdmins from "@/pages/admin/pending-mosque-admins";
 import AdminDashboard from "@/pages/admin/dashboard";
 import { useState } from "react";
 
@@ -51,6 +52,16 @@ function App() {
               <Route path="/admin/pending-mosques" element={
                 <RequireAdmin>
                   <PendingMosques />
+                </RequireAdmin>
+              } />
+              <Route path="/admin/pending-mosque-admins" element={
+                <RequireAdmin>
+                  <PendingMosqueAdmins />
+                </RequireAdmin>
+              } />
+              <Route path="/admin/pending-mosque-admins" element={
+                <RequireAdmin>
+                  <PendingMosqueAdmins />
                 </RequireAdmin>
               } />
               <Route path="*" element={<NotFound />} />
